@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#FAF7F2] text-stone-900 font-sans min-h-screen antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, .font-heading, .font-serif {
+    font-family: 'Newsreader', 'Playfair Display', Georgia, serif;
+  }
+}
+
+/* Custom editorial scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D5CEBF;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B8B0A0;
+}
+
+/* Lumen Card styling */
+.lumen-card {
+  background: #FFFFFF;
+  border: 1px solid #EDE8DF;
+  border-radius: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+}
+
+/* Lumen Input styling */
+.lumen-input {
+  background: #EFECE6;
+  border: 1px solid transparent;
+  border-radius: 0.875rem;
+  color: #1C1917;
+  transition: all 0.15s ease-in-out;
+}
+
+.lumen-input:focus {
+  background: #FFFFFF;
+  border-color: #1A382B;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(26, 56, 43, 0.15);
+}

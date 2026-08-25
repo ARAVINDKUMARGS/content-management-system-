@@ -1,0 +1,241 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { BookOpen, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, PenLine, User } from 'lucide-react';
+
+const Login = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const [selectedRole, setSelectedRole] = useState(location.state?.registeredRole || 'admin');
+  const [email, setEmail] = useState(location.state?.registeredEmail || 'admin@lumen.com');
+  const [password, setPassword] = useState(location.state?.registeredEmail ? '' : 'admin123');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [successNotice, setSuccessNotice] = useState(location.state?.successMessage || '');
+  const [loading, setLoading] = useState(false);
+
+  const from = location.state?.from?.pathname || '/profile';
+
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      setSuccessNotice(location.state.successMessage);
+      if (location.state.registeredEmail) {
+        setEmail(location.state.registeredEmail);
+        setPassword('');
+      }
+      if (location.state.registeredRole) {
+        setSelectedRole(location.state.registeredRole);
+      }
+    }
+  }, [location.state]);
+
+  const handleRoleSelect = (role) => {
+    setSelectedRole(role);
+    setError('');
+    setSuccessNotice('');
+    if (role === 'admin') {
+      setEmail('admin@lumen.com');
+      setPassword('admin123');
+    } else if (role === 'author') {
+      setEmail('author@lumen.com');
+      setPassword('author123');
+    } else {
+      setEmail('reader@lumen.com');
+      setPassword('reader123');
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessNotice('');
+
+    if (!email.trim() || !password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await login(email.trim(), password);
+      if (res.success) {
+        if (res.user.role === 'admin') {
+          navigate('/admin', { replace: true });
+        } else if (res.user.role === 'author') {
+          navigate('/profile', { replace: true });
+        } else {
+          navigate(from === '/login' ? '/profile' : from, { replace: true });
+        }
+      } else {
+        setError(res.message || 'Invalid email or password.');
+      }
+    } catch (err) {
+      setError('Failed to connect to authentication service. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-[82vh] flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full space-y-6">
+        {/* Header Branding */}
+        <div className="text-center space-y-2">
+          <div className="w-11 h-11 rounded-xl bg-[#1A382B] text-white flex items-center justify-center mx-auto shadow-sm">
+            <BookOpen className="w-5 h-5" />
+          </div>
+          <h1 className="font-serif text-3xl font-bold text-stone-900 tracking-tight">
+            Welcome to Lumen
+          </h1>
+          <p className="text-xs text-stone-600">
+            Sign in as an Administrator, Author, or Reader
+          </p>
+        </div>
+
+        {/* Login Form Card */}
+        <div className="bg-white border border-[#EDE8DF] rounded-3xl p-6 sm:p-8 shadow-xs space-y-5">
+          {/* Quick Role Selector Tabs */}
+          <div>
+            <label className="block text-xs font-bold text-stone-700 mb-2">
+              Select Login Role
+            </label>
+            <div className="grid grid-cols-3 gap-2 bg-[#FAF7F2] p-1.5 rounded-2xl border border-[#EDE8DF]">
+              <button
+                type="button"
+                onClick={() => handleRoleSelect('admin')}
+                className={`py-2 px-1 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  selectedRole === 'admin'
+                    ? 'bg-[#1A382B] text-white shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Admin
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleRoleSelect('author')}
+                className={`py-2 px-1 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  selectedRole === 'author'
+                    ? 'bg-[#1A382B] text-white shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <PenLine className="w-3.5 h-3.5" />
+                Author
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleRoleSelect('reader')}
+                className={`py-2 px-1 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                  selectedRole === 'reader'
+                    ? 'bg-[#1A382B] text-white shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                Reader
+              </button>
+            </div>
+          </div>
+
+          {/* Success Banner from Registration */}
+          {successNotice && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs flex items-start gap-2.5 animate-in fade-in duration-150">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
+              <div className="font-medium">{successNotice}</div>
+            </div>
+          )}
+
+          {error && (
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-start gap-2.5 animate-in fade-in duration-150">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div className="font-medium">{error}</div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-stone-800 mb-1.5">
+                Email Address
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  required
+                  placeholder="name@domain.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setSelectedRole('custom');
+                  }}
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#EFECE6] border border-transparent rounded-xl text-xs sm:text-sm text-stone-900 placeholder-[#9E988D] focus:outline-none focus:bg-white focus:border-[#1A382B] focus:ring-2 focus:ring-[#1A382B]/20 transition"
+                />
+                <Mail className="w-4 h-4 text-stone-400 absolute left-3.5 top-3" />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-stone-800">
+                  Password
+                </label>
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2.5 bg-[#EFECE6] border border-transparent rounded-xl text-xs sm:text-sm text-stone-900 placeholder-[#9E988D] focus:outline-none focus:bg-white focus:border-[#1A382B] focus:ring-2 focus:ring-[#1A382B]/20 transition"
+                />
+                <Lock className="w-4 h-4 text-stone-400 absolute left-3.5 top-3" />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="p-1 text-stone-400 hover:text-stone-700 absolute right-3 top-2.5"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full mt-2 py-3 bg-[#1A382B] hover:bg-[#11261D] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In as {selectedRole === 'admin' ? 'Admin' : selectedRole === 'author' ? 'Author' : selectedRole === 'reader' ? 'Reader' : 'User'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="text-center text-xs text-stone-500 pt-3 border-t border-[#EDE8DF]">
+            Don't have an account yet?{' '}
+            <Link to="/register" className="text-[#1A382B] font-bold hover:underline">
+              Create an account
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
