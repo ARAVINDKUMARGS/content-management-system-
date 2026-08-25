@@ -22,9 +22,16 @@ const authenticateUser = async (req, res, next) => {
     });
   }
 
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server configuration error: JWT_SECRET is not configured.',
+    });
+  }
+
   try {
-    // 2. Verify JWT signature & expiration
-    const jwtSecret = process.env.JWT_SECRET || 'lumen_super_secret_jwt_key_change_in_production_2026';
+    // 2. Verify JWT signature & expiration using environment secret
     const decoded = jwt.verify(token, jwtSecret);
 
     // 3. Find user by ID via userStore

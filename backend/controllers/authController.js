@@ -6,7 +6,10 @@ const userStore = require('../models/userStore');
  * Generate signed JWT token
  */
 const generateToken = (userId, role) => {
-  const jwtSecret = process.env.JWT_SECRET || 'lumen_super_secret_jwt_key_change_in_production_2026';
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is not defined.');
+  }
   const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
   return jwt.sign({ id: userId, role }, jwtSecret, { expiresIn });
 };
