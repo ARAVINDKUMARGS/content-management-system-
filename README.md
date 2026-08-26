@@ -1,28 +1,32 @@
-﻿# content-management-system-
+# 📚 Content Management System
 
-A full-stack Content Management System (CMS) for creating, managing, reviewing, publishing, searching, and interacting with articles, blogs, and quizzes.
+A full-stack **Content Management System (CMS)** for creating, managing, reviewing, publishing, searching, and interacting with **articles, blogs, and quizzes**.
 
----
-
-## 📌 Project Overview
-
-The Content Management System provides a centralized platform where:
-
-- Users can register and authenticate.
-- Authors can create and manage articles and quizzes.
-- Administrators can review and verify submitted content.
-- Readers can browse and search published content.
-- Users can attempt quizzes and view their results.
-- Notifications keep authors and users informed about content updates.
+The system provides a centralized platform for authors, administrators, and readers with authentication, content management, quiz functionality, search, and notifications.
 
 ---
 
-## 🎨 Figma Design
+## 🚀 Project Overview
 
-The project follows a common Figma design to maintain a consistent UI/UX across all modules.
+The Content Management System provides the following capabilities:
 
-**Figma Design:**  
-https://www.figma.com/make/QWtS3iW0W1E12vW8yy4LC5/Content-Management-System?t=N1Jf0dDbTLgqZeqT-0
+- 👤 User registration and authentication
+- ✍️ Article and blog creation and management
+- 📝 Quiz creation and management
+- 🔍 Content review and verification
+- 📢 Content approval and publishing
+- 🔎 Search and browse functionality
+- 🎯 Quiz attempts and result tracking
+- 🔔 User notifications
+- 🏷️ Categories and tags for content organization
+
+---
+
+## 🎨 UI/UX Design
+
+The project follows a common **Figma design system** to maintain consistency across all modules.
+
+### Design Guidelines
 
 All team members must follow the common:
 
@@ -36,11 +40,16 @@ All team members must follow the common:
 - Spacing
 - UI/UX patterns
 
+### Figma Design
+
+[🔗 View Figma Design](https://www.figma.com/make/QWtS3iW0W1E12vW8yy4LC5/Content-Management-System?t=N1Jf0dDbTLgqZeqT-0)
+
 ---
 
-# 🚀 Modules
+# 🚀 Features & Modules
 
-### 1. User Management
+## 1. 👤 User Management
+
 - User registration
 - Login and logout
 - JWT authentication
@@ -48,7 +57,12 @@ All team members must follow the common:
 - Role management
 - Password security
 
-### 2. Article / Blog
+**Assigned to:** Sadanand
+
+---
+
+## 2. ✍️ Article / Blog
+
 - Create articles
 - Edit articles
 - Delete articles
@@ -56,46 +70,78 @@ All team members must follow the common:
 - Submit articles
 - Publish articles
 
-### 3. Quiz
+**Assigned to:** Sanika
+
+---
+
+## 3. 📝 Quiz
+
 - Create quizzes
 - Create questions
 - Add answer options
 - Set correct answers
 - Associate quizzes with articles
 
-### 4. Admin Verification
+**Assigned to:** Shyam
+
+---
+
+## 4. 🛡️ Admin Verification
+
 - Review submitted content
 - Approve content
 - Reject content
 - Request changes
 
-### 5. Content Management
+**Assigned to:** Poojitha
+
+---
+
+## 5. 🗂️ Content Management
+
 - Manage approved content
 - Categories
 - Tags
 - Publication status
 - Content organization
 
-### 6. Search & Browse
+**Assigned to:** Rakesh
+
+---
+
+## 6. 🔎 Search & Browse
+
 - Browse articles
 - Search content
 - Filter by category
 - Filter by tags
 - View associated quizzes
 
-### 7. Quiz Attempt & Result
+**Assigned to:** Unnati
+
+---
+
+## 7. 🎯 Quiz Attempt & Result
+
 - Attempt quizzes
 - Submit answers
 - Calculate scores
 - Display results
 - Track quiz attempts
 
-### 8. Notification
+**Assigned to:** Ashmitha
+
+---
+
+## 8. 🔔 Notification
+
 - Approval notifications
 - Rejection notifications
 - Change-request notifications
 - Quiz notifications
 - Author updates
+
+**Assigned to:** Ashmitha
 
 ---
 
@@ -123,7 +169,7 @@ All team members must follow the common:
 - MongoDB
 - Mongoose
 
-## Tools
+## Development Tools
 
 - Git
 - GitHub
@@ -156,20 +202,23 @@ content-management-system-/
 │
 ├── README.md
 └── .gitignore
-
+````
 
 ---
 
-🗄️ Database
+# 🗄️ Database
 
-The project uses one common MongoDB database shared by the team.
+The entire project uses **one common MongoDB database** shared by all team members.
 
-Database
+### Database
 
+```text
 content_management_system
+```
 
-Main Collections
+### Main Collections
 
+```text
 users
 articles
 quizzes
@@ -178,20 +227,25 @@ categories
 tags
 quizAttempts
 notifications
+```
 
-All team members must follow the common database schema.
+All team members must follow the **common database schema**.
 
-Detailed database structure will be maintained in:
+Detailed database fields, relationships, and structure are maintained in:
 
+```text
 docs/DATABASE_SCHEMA.md
+```
 
+> **Important:** If the actual MongoDB Atlas database is configured with a different database name, use the configured database name consistently throughout the project.
 
 ---
 
-🌿 GitHub Branch Strategy
+# 🌿 GitHub Branch Strategy
 
-Everyone works in the same repository using separate feature branches.
+All team members work in the **same GitHub repository** using separate feature branches.
 
+```text
 main
 │
 ├── feature/user-management
@@ -201,205 +255,206 @@ main
 ├── feature/content-management
 ├── feature/search-browse
 └── feature/quiz-result-notification
+```
 
-Branch Allocation
+## Branch Allocation
 
-Team Member	Module	Branch
-
-Sadanand	User Management	feature/user-management
-Sanika	Article / Blog	feature/article-blog
-Shyam	Quiz	feature/quiz
-Poojitha	Admin Verification	feature/admin-verification
-Rakesh	Content Management	feature/content-management
-Unnati	Search & Browse	feature/search-browse
-Ashmitha	Quiz Attempt & Result + Notification	feature/quiz-result-notification
-AK	Final Integration	main
-
-
+| Team Member           | Module                               | Branch                             |
+| --------------------- | ------------------------------------ | ---------------------------------- |
+| Sadanand              | User Management                      | `feature/user-management`          |
+| Sanika                | Article / Blog                       | `feature/article-blog`             |
+| Shyam                 | Quiz                                 | `feature/quiz`                     |
+| Poojitha              | Admin Verification                   | `feature/admin-verification`       |
+| Rakesh                | Content Management                   | `feature/content-management`       |
+| Unnati                | Search & Browse                      | `feature/search-browse`            |
+| Ashmitha              | Quiz Attempt & Result + Notification | `feature/quiz-result-notification` |
+| AK — Aravind Kumar GS | Final Integration                    | `main`                             |
 
 ---
 
-🔄 Development Workflow
+# 🔄 Development Workflow
 
-Step 1 — Update main
+## 1. Update Main Branch
 
+```bash
 git checkout main
 git pull origin main
+```
 
-Step 2 — Create / switch to your feature branch
+## 2. Switch to Your Assigned Branch
 
+```bash
 git checkout feature/your-module
+```
 
-Step 3 — Develop your assigned module
+## 3. Develop Your Module
 
 Follow:
 
-Common Figma design
+* Common Figma design
+* Common database schema
+* Existing project structure
+* Established coding conventions
 
-Common database schema
+## 4. Test Your Module
 
-Existing project structure
+Test:
 
+* Frontend
+* Backend
+* REST APIs
+* Database operations
+* Module functionality
 
-Step 4 — Test your module
+## 5. Commit Changes
 
-Test frontend, backend, APIs, database operations, and integration where applicable.
-
-Step 5 — Commit changes
-
+```bash
 git add .
 git commit -m "Implement <module>"
+```
 
-Step 6 — Push your branch
+## 6. Push Your Branch
 
+```bash
 git push origin feature/your-module
+```
 
-Step 7 — Create Pull Request
+## 7. Create Pull Request
 
 Create a Pull Request:
 
+```text
 feature/your-module → main
+```
 
-Step 8 — Inform the Captain
+## 8. Inform the Captain
 
-Send the PR link to the Captain for review.
+Send the Pull Request link to the Captain for review.
 
-Step 9 — Review & Merge
+## 9. Review & Merge
 
 The Captain reviews the code and merges the Pull Request after approval.
 
-Step 10 — Final Integration
+## 10. Final Integration
 
-The Captain performs:
+The Captain handles:
 
-API integration
-
-Conflict resolution
-
-System testing
-
-Final bug fixing
-
-Final deployment
-
-
+* API integration
+* Conflict resolution
+* System testing
+* Final bug fixing
+* Final deployment
 
 ---
 
-⚠️ GitHub Rules
+# ⚠️ GitHub Rules
 
-1. ❌ Do not push directly to main.
-
-
-2. ❌ Do not create separate repositories for modules.
-
-
+1. ❌ Do not push directly to `main`.
+2. ❌ Do not create separate repositories for individual modules.
 3. ✅ Use your assigned feature branch.
-
-
 4. ✅ Create a Pull Request before merging.
-
-
-5. ❌ Never commit .env files.
-
-
+5. ❌ Never commit `.env` files.
 6. ❌ Never commit passwords or API keys.
-
-
 7. ❌ Never expose database credentials.
-
-
 8. ✅ Follow the common database schema.
-
-
 9. ✅ Follow the common Figma design.
-
-
 10. ✅ Inform the Captain about blockers immediately.
 
-
-
-
 ---
 
-🔐 Environment Variables
+# 🔐 Environment Variables
 
-Create a .env file locally.
+Create a local `.env` file for environment-specific configuration.
 
-Never commit .env to GitHub.
+> ⚠️ **Never commit `.env` to GitHub.**
 
 Example:
 
+```env
 PORT=5000
 NODE_ENV=development
+
 MONGO_URI=<your-mongodb-connection-string>
+
 JWT_SECRET=<your-jwt-secret>
 JWT_EXPIRES_IN=7d
+
 CLIENT_URL=http://localhost:5173
-
-
----
-
-👥 Team
-
-Captain
-
-AK — Aravind Kumar GS
-
-Responsibilities:
-
-Final integration
-
-API integration
-
-Conflict resolution
-
-Code review
-
-System testing
-
-Final deployment
-
-
-Team Members
-
-Sadanand
-
-Sanika
-
-Shyam
-
-Poojitha
-
-Rakesh
-
-Unnati
-
-Ashmitha
-
-
+```
 
 ---
 
-⏰ Project Deadline
+# 👥 Team
 
-29 August 2026
+## 👑 Project Captain
+
+### AK — Aravind Kumar GS
+
+**Responsibilities:**
+
+* Final integration
+* API integration
+* Conflict resolution
+* Code review
+* System testing
+* Final deployment
+
+## 👨‍💻 Team Members
+
+| Member   | Responsibility                       |
+| -------- | ------------------------------------ |
+| Sadanand | User Management                      |
+| Sanika   | Article / Blog                       |
+| Shyam    | Quiz                                 |
+| Poojitha | Admin Verification                   |
+| Rakesh   | Content Management                   |
+| Unnati   | Search & Browse                      |
+| Ashmitha | Quiz Attempt & Result + Notification |
+
+---
+
+# ⏰ Project Deadline
+
+**29 August 2026**
 
 All team members must complete and test their assigned modules before the deadline.
 
+---
+
+# 🎯 Project Workflow
+
+The overall system follows this content lifecycle:
+
+```text
+Create
+   ↓
+Review
+   ↓
+Publish
+   ↓
+Search
+   ↓
+Learn
+   ↓
+Attempt Quizzes
+   ↓
+View Results
+```
 
 ---
 
-🎯 Project Goal
+# 📄 Documentation
 
-The goal is to build a complete, scalable, and user-friendly Content Management System that enables users to:
+Database fields, relationships, and schema documentation are maintained separately:
 
-Create → Review → Publish → Search → Learn → Attempt Quizzes → View Results
+```text
+docs/DATABASE_SCHEMA.md
+```
 
+Keeping the main `README.md` focused on the project, modules, technology stack, team responsibilities, and GitHub workflow keeps the repository clean and easy for the entire team to follow.
 
 ---
 
-📄 License
+# 📜 License
 
-This project is developed as a team project for educational and development purposes.
-
+This project is developed as a **team project for educational and development purposes**
