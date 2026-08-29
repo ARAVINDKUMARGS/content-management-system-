@@ -53,9 +53,11 @@ app.get('/api/health', (req, res) => {
 // API Routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const articleRoutes = require('./routes/articleRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/articles', articleRoutes);
 
 // Root route
 app.get('/', (req, res) => {

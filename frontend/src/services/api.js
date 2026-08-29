@@ -59,4 +59,30 @@ export const userAPI = {
   deleteUser: (id) => API.delete(`/users/${id}`),
 };
 
+// Article Management API Endpoints
+export const articleAPI = {
+  // Public
+  getArticles: () => API.get('/articles'),
+  getArticleById: (id) => API.get(`/articles/${id}`),
+
+  // Author
+  getMyArticles: () => API.get('/articles/my'),
+  getMyArticleById: (id) => API.get(`/articles/my/${id}`),
+
+  createArticle: (data) => API.post('/articles', data),
+
+  updateArticle: (id, data) =>
+    API.put(`/articles/${id}`, data),
+
+  deleteArticle: (id) =>
+    API.delete(`/articles/${id}`),
+
+  submitArticle: (id) =>
+    API.patch(`/articles/${id}/submit`),
+
+  // Admin
+  reviewArticle: (id, data) =>
+    API.patch(`/articles/${id}/review`, data),
+};
+
 export default API;
