@@ -53,6 +53,17 @@ function App() {
               />
 
               <Route
+                path="/write/:id"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['author', 'admin']}>
+                      <WriteArticle />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/article-confirmation"
                 element={
                   <ProtectedRoute>

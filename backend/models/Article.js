@@ -25,6 +25,12 @@ const articleSchema = new mongoose.Schema(
       required: [true, 'Article content is required'],
     },
 
+    videoUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

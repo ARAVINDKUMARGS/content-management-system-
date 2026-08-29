@@ -130,7 +130,7 @@ const getMyArticles = async (req, res) => {
  * @route   GET /api/articles/my/:id
  * @access  Private - Author
  */
-const getMyArticleById = async (req, res) => {
+/*const getMyArticleById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = getUserId(req);
@@ -173,6 +173,65 @@ const getMyArticleById = async (req, res) => {
       message: 'Failed to retrieve article.',
     });
   }
+}; */
+/**
+ * @desc    Get a specific article for editing
+ * @route   GET /api/articles/my/:id
+ * @access  Private - Author
+ */
+const getMyArticleById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = getUserId(req);
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid article ID.',
+      });
+    }
+
+    /*
+     * First find the article WITHOUT populating the author.
+     * This keeps article.author as the ObjectId so that
+     * ownership checking works correctly.
+     */
+    const article = await Article.findById(id);
+
+    if (!article) {
+      return res.status(404).json({
+        success: false,
+        message: 'Article not found.',
+      });
+    }
+
+    /*
+     * Check ownership before populating the author.
+     */
+    if (!isArticleOwner(article, userId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to access this article.',
+      });
+    }
+
+    /*
+     * Now populate the author after ownership has been verified.
+     */
+    await article.populate('author', 'name avatar bio');
+
+    return res.status(200).json({
+      success: true,
+      article,
+    });
+  } catch (error) {
+    console.error('[Get My Article Error]:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve article.',
+    });
+  }
 };
 
 /**
@@ -189,6 +248,7 @@ const createArticle = async (req, res) => {
       category,
       tags,
       content,
+      videoUrl,
       quiz,
       status,
     } = req.body;
@@ -232,6 +292,8 @@ const createArticle = async (req, res) => {
         : [],
 
       content: content.trim(),
+
+      videoUrl: videoUrl ? videoUrl.trim() : '',
 
       author: userId,
 
@@ -308,6 +370,13 @@ const updateArticle = async (req, res) => {
       });
     }
 
+    if (article.status === 'pending_review') {
+      return res.status(400).json({
+        success: false,
+        message: 'Article cannot be edited while it is under review.',
+      });
+    }
+
     /*
      * Do not allow an author to directly change status.
      * Status changes happen through dedicated endpoints.
@@ -317,6 +386,7 @@ const updateArticle = async (req, res) => {
       category,
       tags,
       content,
+      videoUrl,
       quiz,
     } = req.body;
 
@@ -357,6 +427,10 @@ const updateArticle = async (req, res) => {
       }
 
       article.content = content.trim();
+    }
+
+    if (videoUrl !== undefined) {
+      article.videoUrl = videoUrl.trim();
     }
 
     if (quiz !== undefined) {
@@ -423,6 +497,13 @@ const deleteArticle = async (req, res) => {
       return res.status(403).json({
         success: false,
         message: 'You are not authorized to delete this article.',
+      });
+    }
+
+    if (article.status === 'pending_review') {
+      return res.status(400).json({
+        success: false,
+        message: 'Article cannot be deleted while it is under review.',
       });
     }
 

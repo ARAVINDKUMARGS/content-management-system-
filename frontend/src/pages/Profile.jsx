@@ -571,9 +571,7 @@ const Profile = () => {
                     {/* View published article */}
                     {article.status === 'published' && (
                       <button
-                        onClick={() =>
-                          navigate(`/browse/${article._id}`)
-                        }
+                        onClick={() => navigate(`/browse/${article._id}`)}
                         className="p-2 text-stone-400 hover:text-stone-700"
                         title="View article"
                       >
@@ -581,31 +579,33 @@ const Profile = () => {
                       </button>
                     )}
 
-                    {/* Edit */}
-                    <button
-                      onClick={() =>
-                        navigate(`/write/${article._id}`)
-                      }
-                      className="p-2 text-stone-400 hover:text-stone-700"
-                      title="Edit article"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
+                    {/* Edit - only draft, changes requested and rejected */}
+                    {['draft', 'changes_requested', 'rejected'].includes(
+                        article.status
+                      ) && (
+                        <button
+                          onClick={() => navigate(`/write/${article._id}`)}
+                          className="p-2 text-stone-400 hover:text-stone-700"
+                          title="Edit article"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                      )}
 
-                    {/* Delete */}
-                    <button
-                      onClick={() =>
-                        handleDeleteArticle(article._id)
-                      }
-                      className="p-2 text-stone-400 hover:text-rose-600"
-                      title="Delete article"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-
+                    {/* Delete - only draft, changes requested and rejected */}
+                    {['draft', 'changes_requested', 'rejected'].includes(
+                        article.status
+                      ) && (
+                        <button
+                          onClick={() => handleDeleteArticle(article._id)}
+                          className="p-2 text-stone-400 hover:text-rose-600"
+                          title="Delete article"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                   </div>
-
-                </div>
+              </div>
 
               ))}
 
