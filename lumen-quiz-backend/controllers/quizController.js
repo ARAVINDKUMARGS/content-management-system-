@@ -490,6 +490,12 @@ const attachQuizToArticle = async (req, res) => {
     try {
         const { id, articleId } = req.params;
 
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid quiz ID"
+            });
+        }
+
         if (!mongoose.Types.ObjectId.isValid(articleId)) {
             return res.status(400).json({
                 message: "Invalid Article ID"

@@ -1481,6 +1481,7 @@ function App() {
               </label>
 
               <select
+
                 value={statusFilter}
                 onChange={(e) =>
                   setStatusFilter(e.target.value)
@@ -1511,6 +1512,17 @@ function App() {
 
               <button
                 type="button"
+                className="cancel-button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setStatusFilter("all");
+                }}
+              >
+                Clear Filters
+              </button>
+
+              <button
+                type="button"
                 className="clear-filter-button"
                 onClick={clearFilters}
               >
@@ -1529,6 +1541,12 @@ function App() {
                   There are no quizzes matching this filter.
                 </p>
               </div>
+            )}
+
+            {filteredQuizzes.length === 0 && (
+              <p className="no-quizzes">
+                No quizzes found. Try changing your search or filter.
+              </p>
             )}
 
             {filteredQuizzes.map((quiz) => (
