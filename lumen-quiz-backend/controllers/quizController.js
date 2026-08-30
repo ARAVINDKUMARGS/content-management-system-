@@ -9,7 +9,7 @@ const createQuiz = async (req, res) => {
     try {
         const { title, description, articleId, questions } = req.body;
 
-        if (!title) {
+        if (!title || !title.trim()) {
             return res.status(400).json({
                 message: "Quiz title is required",
             });
@@ -35,13 +35,33 @@ const createQuiz = async (req, res) => {
                     });
                 }
 
+                const trimmedOptions = question.options.map(
+                    (option) => option.trim()
+                );
+
+                if (trimmedOptions.some((option) => !option)) {
+                    return res.status(400).json({
+                        message: "All options are required",
+                    });
+                }
+
+                if (new Set(trimmedOptions).size !== 4) {
+                    return res.status(400).json({
+                        message: "All options must be different",
+                    });
+                }
+
                 if (!question.correctAnswer) {
                     return res.status(400).json({
                         message: "Correct answer is required",
                     });
                 }
 
-                if (!question.options.includes(question.correctAnswer)) {
+                const correctAnswer = question.correctAnswer.trim();
+
+                if (!question.options.some(
+                    (option) => option.trim() === correctAnswer
+                )) {
                     return res.status(400).json({
                         message: "Correct answer must match one of the options",
                     });
@@ -167,9 +187,14 @@ const updateQuiz = async (req, res) => {
             title,
             description,
             questions,
-            status,
             articleId,
         } = req.body;
+
+        if (title !== undefined && !title.trim()) {
+            return res.status(400).json({
+                message: "Quiz title is required"
+            });
+        }
 
         if (title !== undefined) {
 
@@ -187,7 +212,7 @@ const updateQuiz = async (req, res) => {
 
         if (questions) {
             for (const question of questions) {
-                if (!question.question) {
+                if (!question.question || !question.question.trim()) {
                     return res.status(400).json({
                         message: "Question text is required",
                     });
@@ -199,13 +224,33 @@ const updateQuiz = async (req, res) => {
                     });
                 }
 
+                const trimmedOptions = question.options.map(
+                    (option) => option.trim()
+                );
+
+                if (trimmedOptions.some((option) => !option)) {
+                    return res.status(400).json({
+                        message: "All options are required",
+                    });
+                }
+
+                if (new Set(trimmedOptions).size !== 4) {
+                    return res.status(400).json({
+                        message: "All options must be different",
+                    });
+                }
+
                 if (!question.correctAnswer) {
                     return res.status(400).json({
                         message: "Correct answer is required",
                     });
                 }
 
-                if (!question.options.includes(question.correctAnswer)) {
+                const correctAnswer = question.correctAnswer.trim();
+
+                if (!question.options.some(
+                    (option) => option.trim() === correctAnswer
+                )) {
                     return res.status(400).json({
                         message: "Correct answer must match one of the options",
                     });
@@ -227,10 +272,6 @@ const updateQuiz = async (req, res) => {
 
         if (articleId !== undefined) {
             quiz.articleId = articleId;
-        }
-
-        if (status !== undefined) {
-            quiz.status = status;
         }
 
         await quiz.save();
@@ -304,7 +345,7 @@ const addQuestion = async (req, res) => {
             correctAnswer,
         } = req.body;
 
-        if (!question || !options || !correctAnswer) {
+        if (!question || !question.trim() || !options || !correctAnswer) {
             return res.status(400).json({
                 message: "Question, options and correct answer are required",
             });
@@ -316,7 +357,27 @@ const addQuestion = async (req, res) => {
             });
         }
 
-        if (!options.includes(correctAnswer)) {
+        const trimmedOptions = options.map(
+            (option) => option.trim()
+        );
+
+        if (trimmedOptions.some((option) => !option)) {
+            return res.status(400).json({
+                message: "All options are required",
+            });
+        }
+
+        if (new Set(trimmedOptions).size !== 4) {
+            return res.status(400).json({
+                message: "All options must be different",
+            });
+        }
+
+        const trimmedCorrectAnswer = correctAnswer.trim();
+
+        if (!options.some(
+            (option) => option.trim() === trimmedCorrectAnswer
+        )) {
             return res.status(400).json({
                 message: "Correct answer must match one of the options",
             });
@@ -394,6 +455,12 @@ const updateQuestion = async (req, res) => {
             question.question = questionText;
         }
 
+        if (!question.question || !question.question.trim()) {
+            return res.status(400).json({
+                message: "Question text is required"
+            });
+        }
+
         if (options !== undefined) {
             if (!Array.isArray(options) || options.length !== 4) {
                 return res.status(400).json({
@@ -408,7 +475,11 @@ const updateQuestion = async (req, res) => {
             question.correctAnswer = correctAnswer;
         }
 
-        if (!question.options.includes(question.correctAnswer)) {
+        const trimmedCorrectAnswer = question.correctAnswer.trim();
+
+        if (!question.options.some(
+            (option) => option.trim() === trimmedCorrectAnswer
+        )) {
             return res.status(400).json({
                 message: "Correct answer must match one of the options",
             });
