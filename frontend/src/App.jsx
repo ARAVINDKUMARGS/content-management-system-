@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminVerification from './pages/AdminVerification';
 import { HomePage, BrowsePage, WritePage } from './pages/Placeholders';
 
 function App() {
@@ -60,6 +61,16 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+  path="/admin/verification"
+  element={
+    <ProtectedRoute>
+      <RoleRoute allowedRoles={['admin']}>
+        <AdminVerification />
+      </RoleRoute>
+    </ProtectedRoute>
+  }
+/>
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
