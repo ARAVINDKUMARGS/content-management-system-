@@ -1,3 +1,7 @@
+const {
+    authenticateUser,
+} = require("../middlewares/authMiddleware");
+
 const express = require("express");
 
 const router = express.Router();
@@ -21,21 +25,21 @@ const {
 // ===============================
 
 // Create Quiz
-router.post("/", createQuiz);
+router.post("/", authenticateUser, createQuiz);
 
 // Get All Quizzes
 router.get("/", getAllQuizzes);
 
-router.put("/:id/submit", submitQuiz);
+router.put("/:id/submit", authenticateUser, submitQuiz);
 
 // Get Single Quiz
 router.get("/:id", getQuizById);
 
 // Update Quiz
-router.put("/:id", updateQuiz);
+router.put("/:id", authenticateUser, updateQuiz);
 
 // Delete Quiz
-router.delete("/:id", deleteQuiz);
+router.delete("/:id", authenticateUser, deleteQuiz);
 
 
 // ===============================
@@ -43,13 +47,21 @@ router.delete("/:id", deleteQuiz);
 // ===============================
 
 // Add Question
-router.post("/:id/questions", addQuestion);
+router.post("/:id/questions", authenticateUser, addQuestion);
 
 // Update Question
-router.put("/:id/questions/:questionId", updateQuestion);
+router.put(
+    "/:id/questions/:questionId",
+    authenticateUser,
+    updateQuestion
+);
 
 // Delete Question
-router.delete("/:id/questions/:questionId", deleteQuestion);
+router.delete(
+    "/:id/questions/:questionId",
+    authenticateUser,
+    deleteQuestion
+);
 
 
 // ===============================
@@ -58,6 +70,7 @@ router.delete("/:id/questions/:questionId", deleteQuestion);
 
 router.put(
     "/:id/attach/:articleId",
+    authenticateUser,
     attachQuizToArticle
 );
 

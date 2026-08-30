@@ -83,7 +83,7 @@ const createQuiz = async (req, res) => {
             title,
             description,
             articleId: articleId || null,
-            createdBy: null,
+            createdBy: req.user.id || req.user._id,
             questions: questions || [],
         });
 

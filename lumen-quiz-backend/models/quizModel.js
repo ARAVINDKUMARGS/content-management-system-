@@ -50,7 +50,7 @@ const quizSchema = new mongoose.Schema(
 
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "user",
+            ref: "User",
             default: null,
         },
 

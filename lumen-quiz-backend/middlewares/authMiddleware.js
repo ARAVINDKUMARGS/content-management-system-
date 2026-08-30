@@ -1,10 +1,9 @@
-const authMiddleware = (req, res, next) => {
-    // Temporary user for testing
-    req.user = {
-        _id: "68a123456789abcdef123456"
-    };
+const {
+    authenticateUser,
+    authorizeRole,
+} = require("../../backend/middleware/auth");
 
-    next();
+module.exports = {
+    authenticateUser,
+    authorizeRole,
 };
-
-module.exports = authMiddleware;
