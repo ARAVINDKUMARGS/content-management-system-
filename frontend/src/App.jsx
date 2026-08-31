@@ -1,3 +1,4 @@
+import QuizAttempt from './pages/QuizAttempt';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -38,6 +39,15 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* Protected Quiz Attempt Route */}
+<Route
+  path="/quiz"
+  element={
+    <ProtectedRoute>
+      <QuizAttempt />
+    </ProtectedRoute>
+  }
+/>
 
               {/* Role Restricted Routes */}
               <Route
