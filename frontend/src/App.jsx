@@ -12,8 +12,10 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
+import { HomePage, BrowsePage } from './pages/Placeholders';
+import WriteArticle from './pages/WriteArticle';
+import ArticleConfirmation from './pages/ArticleConfirmation';
 import AdminVerification from './pages/AdminVerification';
-import { HomePage, BrowsePage, WritePage } from './pages/Placeholders';
 
 function App() {
   return (
@@ -55,7 +57,29 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <RoleRoute allowedRoles={['author', 'admin']}>
-                      <WritePage />
+                      <WriteArticle />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/write/:id"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['author', 'admin']}>
+                      <WriteArticle />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/article-confirmation"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['author', 'admin']}>
+                      <ArticleConfirmation />
                     </RoleRoute>
                   </ProtectedRoute>
                 }
@@ -72,15 +96,15 @@ function App() {
                 }
               />
               <Route
-  path="/admin/verification"
-  element={
-    <ProtectedRoute>
-      <RoleRoute allowedRoles={['admin']}>
-        <AdminVerification />
-      </RoleRoute>
-    </ProtectedRoute>
-  }
-/>
+                path="/admin/verification"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['admin']}>
+                      <AdminVerification />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
