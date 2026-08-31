@@ -14,6 +14,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import { HomePage, BrowsePage } from './pages/Placeholders';
 import WriteArticle from './pages/WriteArticle';
 import ArticleConfirmation from './pages/ArticleConfirmation';
+import AdminVerification from './pages/AdminVerification';
 
 function App() {
   return (
@@ -80,6 +81,16 @@ function App() {
                   <ProtectedRoute>
                     <RoleRoute allowedRoles={['admin']}>
                       <AdminDashboard />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/verification"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['admin']}>
+                      <AdminVerification />
                     </RoleRoute>
                   </ProtectedRoute>
                 }

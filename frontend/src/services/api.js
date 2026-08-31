@@ -58,6 +58,44 @@ export const userAPI = {
   updateUserRole: (id, role) => API.put(`/users/${id}/role`, { role }),
   deleteUser: (id) => API.delete(`/users/${id}`),
 };
+// Admin Verification API Endpoints
+export const adminVerificationAPI = {
+  // Get content waiting for admin review
+  getPendingArticles: () =>
+    API.get('/admin-verification/articles'),
+
+  getPendingQuizzes: () =>
+    API.get('/admin-verification/quizzes'),
+getStats: () => API.get("/admin-verification/stats"),
+  // Article actions
+  approveArticle: (id) =>
+    API.put(`/admin-verification/articles/${id}/approve`),
+
+  rejectArticle: (id, reason) =>
+    API.put(`/admin-verification/articles/${id}/reject`, {
+      reason,
+    }),
+
+  requestArticleChanges: (id, comment) =>
+    API.put(`/admin-verification/articles/${id}/request-changes`, {
+      comment,
+    }),
+
+  // Quiz actions
+  approveQuiz: (id) =>
+    API.put(`/admin-verification/quizzes/${id}/approve`),
+
+  rejectQuiz: (id, reason) =>
+    API.put(`/admin-verification/quizzes/${id}/reject`, {
+      reason,
+    }),
+
+  requestQuizChanges: (id, comment) =>
+    API.put(`/admin-verification/quizzes/${id}/request-changes`, {
+      comment,
+    }),
+};
+
 
 // Article Management API Endpoints
 export const articleAPI = {
