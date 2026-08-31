@@ -130,55 +130,6 @@ const getMyArticles = async (req, res) => {
  * @route   GET /api/articles/my/:id
  * @access  Private - Author
  */
-/*const getMyArticleById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = getUserId(req);
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid article ID.',
-      });
-    }
-
-    const article = await Article.findById(id).populate(
-      'author',
-      'name avatar bio'
-    );
-
-    if (!article) {
-      return res.status(404).json({
-        success: false,
-        message: 'Article not found.',
-      });
-    }
-
-    if (!isArticleOwner(article, userId)) {
-      return res.status(403).json({
-        success: false,
-        message: 'You are not authorized to access this article.',
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      article,
-    });
-  } catch (error) {
-    console.error('[Get My Article Error]:', error);
-
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve article.',
-    });
-  }
-}; */
-/**
- * @desc    Get a specific article for editing
- * @route   GET /api/articles/my/:id
- * @access  Private - Author
- */
 const getMyArticleById = async (req, res) => {
   try {
     const { id } = req.params;

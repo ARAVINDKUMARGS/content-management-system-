@@ -132,6 +132,14 @@ const Profile = () => {
     }
   };
 
+  const handleEditArticle = (articleId) => {
+    navigate(`/write/${articleId}`);
+  };
+
+  const handleViewArticle = (articleId) => {
+    navigate(`/browse/${articleId}`);
+  };
+
   // --------------------------------------------------
   // Delete article
   // --------------------------------------------------
@@ -515,7 +523,15 @@ const Profile = () => {
           {!loadingArticles && articles.length > 0 && (
             <div className="space-y-3">
 
-              {articles.map((article) => (
+              {articles.map((article) => {
+                
+                const canEditOrDelete = [
+                  'draft',
+                  'changes_requested',
+                  'rejected',
+                ].includes(article.status);
+
+                return (
 
                 <div
                   key={article._id}
@@ -571,7 +587,7 @@ const Profile = () => {
                     {/* View published article */}
                     {article.status === 'published' && (
                       <button
-                        onClick={() => navigate(`/browse/${article._id}`)}
+                        onClick={() => handleViewArticle(article._id)}
                         className="p-2 text-stone-400 hover:text-stone-700"
                         title="View article"
                       >
@@ -580,11 +596,9 @@ const Profile = () => {
                     )}
 
                     {/* Edit - only draft, changes requested and rejected */}
-                    {['draft', 'changes_requested', 'rejected'].includes(
-                        article.status
-                      ) && (
+                    {canEditOrDelete && (
                         <button
-                          onClick={() => navigate(`/write/${article._id}`)}
+                          onClick={() => handleEditArticle(article._id)}
                           className="p-2 text-stone-400 hover:text-stone-700"
                           title="Edit article"
                         >
@@ -593,9 +607,7 @@ const Profile = () => {
                       )}
 
                     {/* Delete - only draft, changes requested and rejected */}
-                    {['draft', 'changes_requested', 'rejected'].includes(
-                        article.status
-                      ) && (
+                    {canEditOrDelete && (
                         <button
                           onClick={() => handleDeleteArticle(article._id)}
                           className="p-2 text-stone-400 hover:text-rose-600"
@@ -606,8 +618,8 @@ const Profile = () => {
                       )}
                   </div>
               </div>
-
-              ))}
+                );
+              })}
 
             </div>
           )}
