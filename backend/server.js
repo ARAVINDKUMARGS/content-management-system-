@@ -1,6 +1,4 @@
 const dns = require('dns');
-
-// Use Google DNS for MongoDB Atlas SRV lookup
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const express = require('express');
@@ -11,7 +9,7 @@ const connectDB = require('./config/db');
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '.env') });
-dotenv.config(); // Fallback to current working directory
+dotenv.config();
 
 const app = express();
 
@@ -22,7 +20,7 @@ connectDB().catch((err) => {
   );
 });
 
-// Middleware
+// Allowed frontend origins
 const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
   'http://localhost:5173',
@@ -30,30 +28,33 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
 ];
 
+// CORS
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps, curl, Postman)
-      if (!origin) return callback(null, true);
+      if (!origin) {
+        return callback(null, true);
+      }
 
       if (
-        allowedOrigins.indexOf(origin) !== -1 ||
+        allowedOrigins.includes(origin) ||
         process.env.NODE_ENV === 'development'
       ) {
         return callback(null, true);
       }
 
-      // Permissive in development to avoid team member blocking
+      // Allow requests during development
       return callback(null, true);
     },
     credentials: true,
   })
 );
 
+// Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
+// Health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -63,7 +64,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// API Routes
+// Routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const articleRoutes = require('./routes/articleRoutes');
@@ -76,12 +77,12 @@ app.use('/api/articles', articleRoutes);
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to Lumen CMS API',
-    module: 'User Management & Authentication (Sadanand)',
+    module: 'User Management & Authentication',
     documentation: '/api/health',
   });
 });
 
-// 404 Route Not Found Handler
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -89,7 +90,7 @@ app.use((req, res) => {
   });
 });
 
-// Global Error Handler
+// Error handler
 app.use((err, req, res, next) => {
   console.error(
     '[Lumen Server Error]:',
@@ -107,14 +108,15 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Server port
 const PORT = process.env.PORT || 5000;
 
+// Start server
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log('\n=================================================');
     console.log(`  🌿 Lumen CMS Server running on port ${PORT}`);
     console.log(`  🔗 API Root: http://localhost:${PORT}/api/auth`);
-    console.log(`  🛡️ Auth Module: Sadanand (User Management)`);
     console.log('=================================================\n');
   });
 }

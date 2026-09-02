@@ -16,7 +16,7 @@ const createArticle = async (req, res) => {
     });
 
     const populatedArticle = await Article.findById(article._id)
-      .populate('author', 'name email role');
+      .populate('author', 'name email role avatar');
 
     res.status(201).json({
       success: true,
@@ -143,6 +143,7 @@ const updateArticle = async (req, res) => {
     if (description !== undefined) article.description = description;
     if (content !== undefined) article.content = content;
     if (category !== undefined) article.category = category;
+
     if (tags !== undefined) {
       article.tags = Array.isArray(tags) ? tags : [];
     }

@@ -58,5 +58,69 @@ export const userAPI = {
   updateUserRole: (id, role) => API.put(`/users/${id}/role`, { role }),
   deleteUser: (id) => API.delete(`/users/${id}`),
 };
+// Admin Verification API Endpoints
+export const adminVerificationAPI = {
+  // Get content waiting for admin review
+  getPendingArticles: () =>
+    API.get('/admin-verification/articles'),
+
+  getPendingQuizzes: () =>
+    API.get('/admin-verification/quizzes'),
+getStats: () => API.get("/admin-verification/stats"),
+  // Article actions
+  approveArticle: (id) =>
+    API.put(`/admin-verification/articles/${id}/approve`),
+
+  rejectArticle: (id, reason) =>
+    API.put(`/admin-verification/articles/${id}/reject`, {
+      reason,
+    }),
+
+  requestArticleChanges: (id, comment) =>
+    API.put(`/admin-verification/articles/${id}/request-changes`, {
+      comment,
+    }),
+
+  // Quiz actions
+  approveQuiz: (id) =>
+    API.put(`/admin-verification/quizzes/${id}/approve`),
+
+  rejectQuiz: (id, reason) =>
+    API.put(`/admin-verification/quizzes/${id}/reject`, {
+      reason,
+    }),
+
+  requestQuizChanges: (id, comment) =>
+    API.put(`/admin-verification/quizzes/${id}/request-changes`, {
+      comment,
+    }),
+};
+
+
+// Article Management API Endpoints
+export const articleAPI = {
+  // Public
+  getArticles: () => API.get('/articles'),
+  getArticleById: (id) => API.get(`/articles/${id}`),
+
+  // Author
+  getMyArticles: () => API.get('/articles/my'),
+  getMyArticleById: (id) => API.get(`/articles/my/${id}`),
+
+  createArticle: (data) => API.post('/articles', data),
+
+  updateArticle: (id, data) =>
+    API.put(`/articles/${id}`, data),
+
+  deleteArticle: (id) =>
+    API.delete(`/articles/${id}`),
+
+  submitArticle: (id) =>
+    API.patch(`/articles/${id}/submit`),
+
+  // Admin
+  reviewArticle: (id, data) =>
+    API.patch(`/articles/${id}/review`, data),
+};
 
 export default API;

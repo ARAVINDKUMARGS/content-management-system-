@@ -2,11 +2,11 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGO_URI;
+    const mongoURI = process.env.MONGODB_URI;
 
     if (!mongoURI) {
       console.warn(
-        '[Lumen Database] WARNING: MONGO_URI environment variable is not defined.'
+        '[Lumen Database] WARNING: MONGODB_URI environment variable is not defined.'
       );
       return null;
     }

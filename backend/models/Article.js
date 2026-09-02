@@ -81,6 +81,42 @@ const articleSchema = new mongoose.Schema(
       },
     },
 
+    reviewFeedback: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+
+    videoUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+
+    quiz: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+
+      question: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+
+      options: {
+        type: [String],
+        default: [],
+      },
+
+      correctAnswer: {
+        type: String,
+        default: '',
+        trim: true,
+      },
+    },
+
     submittedAt: {
       type: Date,
       default: null,
@@ -94,16 +130,54 @@ const articleSchema = new mongoose.Schema(
     views: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     likes: {
       type: Number,
       default: 0,
+      min: 0,
+    },
+
+    readingTime: {
+      type: Number,
+      default: 1,
+      min: 1,
     },
   },
   {
     timestamps: true,
   }
 );
+
+// Calculate approximate reading time before saving.
+articleSchema.pre('save', function (next) {
+  if (this.content) {
+    const wordCount = this.content
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+
+    this.readingTime = Math.max(1, Math.ceil(wordCount / 200));
+  }
+
+  next();
+});
+
+// Calculate reading time when content is updated.
+articleSchema.pre('findOneAndUpdate', function (next) {
+  const update = this.getUpdate();
+
+  if (update && update.content) {
+    const wordCount = update.content
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+
+    update.readingTime = Math.max(1, Math.ceil(wordCount / 200));
+  }
+
+  next();
+});
 
 module.exports = mongoose.model('Article', articleSchema);

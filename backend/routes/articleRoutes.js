@@ -20,16 +20,8 @@ const {
 
 const router = express.Router();
 
-/*
- * Author / authenticated user routes
- */
-
-// Get my articles
-router.get(
-  '/mine',
-  authenticateUser,
-  getMyArticles
-);
+// Get logged-in author's articles
+router.get('/mine', authenticateUser, getMyArticles);
 
 // Create article
 router.post(
@@ -39,7 +31,7 @@ router.post(
   createArticle
 );
 
-// Submit article
+// Submit article for review
 router.patch(
   '/:id/submit',
   authenticateUser,
@@ -55,29 +47,13 @@ router.put(
   updateArticle
 );
 
-/*
- * General article routes
- */
+// Get all articles
+router.get('/', authenticateUser, getArticles);
 
-// Get articles
-router.get(
-  '/',
-  authenticateUser,
-  getArticles
-);
+// Get single article
+router.get('/:id', authenticateUser, getArticleById);
 
-// Get article by ID
-router.get(
-  '/:id',
-  authenticateUser,
-  getArticleById
-);
-
-/*
- * Admin workflow
- */
-
-// Approve
+// Admin: approve article
 router.patch(
   '/:id/approve',
   authenticateUser,
@@ -85,7 +61,7 @@ router.patch(
   approveArticle
 );
 
-// Reject
+// Admin: reject article
 router.patch(
   '/:id/reject',
   authenticateUser,
@@ -93,7 +69,7 @@ router.patch(
   rejectArticle
 );
 
-// Request changes
+// Admin: request changes
 router.patch(
   '/:id/request-changes',
   authenticateUser,
@@ -101,7 +77,7 @@ router.patch(
   requestChanges
 );
 
-// Publish
+// Admin: publish article
 router.patch(
   '/:id/publish',
   authenticateUser,

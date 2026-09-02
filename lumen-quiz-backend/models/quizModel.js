@@ -58,12 +58,23 @@ const quizSchema = new mongoose.Schema(
             type: [questionSchema],
             default: [],
         },
+status: {
+    type: String,
+    enum: [
+        "draft",
+        "submitted",
+        "approved",
+        "rejected",
+        "changes_requested",
+    ],
+    default: "draft",
+},
 
-        status: {
-            type: String,
-            enum: ["draft", "submitted", "approved", "rejected"],
-            default: "draft",
-        },
+reviewFeedback: {
+    type: String,
+    default: "",
+    trim: true,
+},
     },
     {
         timestamps: true,

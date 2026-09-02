@@ -1,3 +1,4 @@
+import QuizAttempt from './pages/QuizAttempt';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -11,7 +12,10 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
-import { HomePage, BrowsePage, WritePage } from './pages/Placeholders';
+import { HomePage, BrowsePage } from './pages/Placeholders';
+import WriteArticle from './pages/WriteArticle';
+import ArticleConfirmation from './pages/ArticleConfirmation';
+import AdminVerification from './pages/AdminVerification';
 
 function App() {
   return (
@@ -37,6 +41,15 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* Protected Quiz Attempt Route */}
+<Route
+  path="/quiz"
+  element={
+    <ProtectedRoute>
+      <QuizAttempt />
+    </ProtectedRoute>
+  }
+/>
 
               {/* Role Restricted Routes */}
               <Route
@@ -44,7 +57,29 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <RoleRoute allowedRoles={['author', 'admin']}>
-                      <WritePage />
+                      <WriteArticle />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/write/:id"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['author', 'admin']}>
+                      <WriteArticle />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/article-confirmation"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['author', 'admin']}>
+                      <ArticleConfirmation />
                     </RoleRoute>
                   </ProtectedRoute>
                 }
@@ -56,6 +91,16 @@ function App() {
                   <ProtectedRoute>
                     <RoleRoute allowedRoles={['admin']}>
                       <AdminDashboard />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/verification"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['admin']}>
+                      <AdminVerification />
                     </RoleRoute>
                   </ProtectedRoute>
                 }
