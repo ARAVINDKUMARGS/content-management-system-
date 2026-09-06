@@ -10,6 +10,8 @@ const {
   likeArticle,
   incrementViews,
   deleteArticle,
+  reviewArticle,
+  getAllArticlesForAdmin,
 } = require('../controllers/articleController');
 
 const {
@@ -91,5 +93,21 @@ router.patch(
   authorizeRole('admin'),
   requestArticleChanges
 );
+
+router.get(
+  '/admin/all',
+  authenticateUser,
+  authorizeRole('admin'),
+  getAllArticlesForAdmin
+);
+
+/*
+ * Get a single published article
+ * GET /api/articles/:id
+ *
+ * This MUST be after /my and /my/:id.
+ */
+router.get('/:id', getArticleById);
+
 
 module.exports = router;

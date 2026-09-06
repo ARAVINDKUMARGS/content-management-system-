@@ -9,6 +9,14 @@ const API = axios.create({
   timeout: 10000,
 });
 
+const QUIZ_API = axios.create({
+  baseURL: import.meta.env.VITE_QUIZ_API_URL || 'http://localhost:5001/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+});
+
 // Request Interceptor: Attach JWT Bearer token if available
 API.interceptors.request.use(
   (config) => {
@@ -59,7 +67,6 @@ export const userAPI = {
   deleteUser: (id) => API.delete(`/users/${id}`),
 };
 
-<<<<<<< HEAD
 // Admin Verification API Endpoints
 export const adminVerificationAPI = {
   getPendingArticles: () => API.get('/admin-verification/articles'),
@@ -111,7 +118,7 @@ export const notificationAPI = {
   getNotifications: () => API.get('/notifications'),
   markAsRead: (id) => API.patch(`/notifications/${id}/read`),
   markAllAsRead: () => API.patch('/notifications/read-all'),
-=======
+};
 // Comment & Discussion API Endpoints (Sadanand Module)
 export const commentAPI = {
   getCommentsByTarget: (targetId) => API.get(`/comments/target/${targetId}`),
@@ -120,7 +127,25 @@ export const commentAPI = {
   deleteComment: (id) => API.delete(`/comments/${id}`),
   toggleReaction: (id, type = 'like') => API.post(`/comments/${id}/react`, { type }),
   getRecentDiscussions: (limit = 8) => API.get('/comments/recent', { params: { limit } }),
->>>>>>> 959f237 (Update user management)
+
+  // Admin
+  reviewArticle: (id, data) =>
+    API.patch(`/articles/${id}/review`, data),
+
+  getAllArticlesForAdmin: () =>
+    API.get('/articles/admin/all'),
+};
+
+// Quiz Management API Endpoints
+export const QuizAPI = {
+  getAllQuizzes: () => QUIZ_API.get('/quizzes'),
+  getQuizById: (id) => QUIZ_API.get(`/quizzes/${id}`),
+
+  updateQuiz: (id, data) =>
+    QUIZ_API.put(`/quizzes/${id}`, data),
+
+  deleteQuiz: (id) =>
+    QUIZ_API.delete(`/quizzes/${id}`),
 };
 
 export default API;
