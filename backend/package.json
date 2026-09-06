@@ -6,17 +6,23 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node seeds/userSeed.js",
-    "test": "node tests/verify_auth.js"
+    "seed": "node seeds/userSeed.js && node seeds/commentSeed.js",
+    "seed:users": "node seeds/userSeed.js",
+    "seed:comments": "node seeds/commentSeed.js",
+    "test": "node tests/verify_auth.js && node tests/verify_comments.js",
+    "test:auth": "node tests/verify_auth.js",
+    "test:comments": "node tests/verify_comments.js"
   },
   "keywords": [
     "lumen",
     "cms",
     "jwt",
     "authentication",
-    "user-management"
+    "user-management",
+    "comments",
+    "discussions"
   ],
-  "author": "Sadanand (User Management Module)",
+  "author": "Sadanand (User Management & Discussion Module)",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",

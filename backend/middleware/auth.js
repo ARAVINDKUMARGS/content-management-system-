@@ -62,6 +62,28 @@ const authenticateUser = async (req, res, next) => {
 };
 
 /**
+ * Optional Authentication: Attaches user if valid token present, continues normally if not.
+ */
+const optionalAuth = async (req, res, next) => {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer ')
+  ) {
+    const token = req.headers.authorization.split(' ')[1];
+    const jwtSecret = process.env.JWT_SECRET;
+    if (token && jwtSecret) {
+      try {
+        const decoded = jwt.verify(token, jwtSecret);
+        req.user = await userStore.findById(decoded.id);
+      } catch (err) {
+        // Silently proceed for optional auth
+      }
+    }
+  }
+  next();
+};
+
+/**
  * Reusable Role-Based Authorization Middleware.
  */
 const authorizeRole = (...allowedRoles) => {
@@ -86,6 +108,7 @@ const authorizeRole = (...allowedRoles) => {
 
 module.exports = {
   authenticateUser,
+  optionalAuth,
   authorizeRole,
   protect: authenticateUser,
   restrictTo: authorizeRole,

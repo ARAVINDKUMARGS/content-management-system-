@@ -53,15 +53,17 @@ app.get('/api/health', (req, res) => {
 // API Routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/comments', commentRoutes);
 
 // Root route
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to Lumen CMS API',
-    module: 'User Management & Authentication (Sadanand)',
+    module: 'User Management, Authentication & Discussions (Sadanand)',
     documentation: '/api/health',
   });
 });
@@ -93,7 +95,8 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`\n=================================================`);
     console.log(`  🌿 Lumen CMS Server running on port ${PORT}`);
     console.log(`  🔗 API Root: http://localhost:${PORT}/api/auth`);
-    console.log(`  🛡️ Auth Module: Sadanand (User Management)`);
+    console.log(`  💬 Comments API: http://localhost:${PORT}/api/comments`);
+    console.log(`  🛡️ Modules: User Management, Auth & Discussions (Sadanand)`);
     console.log(`=================================================\n`);
   });
 }

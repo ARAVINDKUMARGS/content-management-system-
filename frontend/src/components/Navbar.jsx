@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Clock,
+  MessageSquare,
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -83,13 +84,16 @@ const Navbar = () => {
 
   const isHomeActive = location.pathname === '/';
   const isBrowseActive = location.pathname === '/browse';
+  const isDiscussionActive = location.pathname.startsWith('/discussions');
   const isWriteActive = location.pathname === '/write';
   const isAdminActive = location.pathname.startsWith('/admin');
   const isProfileActive = location.pathname === '/profile';
   const unreadCount = notifications.filter((n) => n.unread).length;
+
   const navItems = [
     { to: '/', label: 'Home', icon: LayoutGrid, active: isHomeActive },
     { to: '/browse', label: 'Browse', icon: Search, active: isBrowseActive },
+    { to: '/discussions', label: 'Discussions', icon: MessageSquare, active: isDiscussionActive },
     { to: '/write', label: 'Write', icon: PenLine, active: isWriteActive, show: isAuthor },
     {
       to: '/admin',
@@ -175,6 +179,14 @@ const Navbar = () => {
                       >
                         <User className="w-4 h-4 text-stone-500" />
                         My Profile
+                      </Link>
+
+                      <Link
+                        to="/discussions"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-stone-700 hover:bg-[#FAF7F2] transition"
+                      >
+                        <MessageSquare className="w-4 h-4 text-stone-500" />
+                        Community Discussions
                       </Link>
 
                       {isAuthor && (

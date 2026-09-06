@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
+import DiscussionPage from './pages/DiscussionPage';
 import { HomePage, BrowsePage, WritePage } from './pages/Placeholders';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/browse" element={<BrowsePage />} />
+              <Route path="/discussions" element={<DiscussionPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 

@@ -59,4 +59,14 @@ export const userAPI = {
   deleteUser: (id) => API.delete(`/users/${id}`),
 };
 
+// Comment & Discussion API Endpoints (Sadanand Module)
+export const commentAPI = {
+  getCommentsByTarget: (targetId) => API.get(`/comments/target/${targetId}`),
+  createComment: (data) => API.post('/comments', data),
+  updateComment: (id, data) => API.put(`/comments/${id}`, data),
+  deleteComment: (id) => API.delete(`/comments/${id}`),
+  toggleReaction: (id, type = 'like') => API.post(`/comments/${id}/react`, { type }),
+  getRecentDiscussions: (limit = 8) => API.get('/comments/recent', { params: { limit } }),
+};
+
 export default API;

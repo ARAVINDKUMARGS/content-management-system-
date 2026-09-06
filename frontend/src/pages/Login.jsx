@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { BookOpen, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, PenLine, User } from 'lucide-react';
+import { BookOpen, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const Login = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [selectedRole, setSelectedRole] = useState(location.state?.registeredRole || 'admin');
-  const [email, setEmail] = useState(location.state?.registeredEmail || 'admin@lumen.com');
-  const [password, setPassword] = useState(location.state?.registeredEmail ? '' : 'admin123');
+  const [email, setEmail] = useState(location.state?.registeredEmail || '');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successNotice, setSuccessNotice] = useState(location.state?.successMessage || '');
@@ -25,27 +24,8 @@ const Login = () => {
         setEmail(location.state.registeredEmail);
         setPassword('');
       }
-      if (location.state.registeredRole) {
-        setSelectedRole(location.state.registeredRole);
-      }
     }
   }, [location.state]);
-
-  const handleRoleSelect = (role) => {
-    setSelectedRole(role);
-    setError('');
-    setSuccessNotice('');
-    if (role === 'admin') {
-      setEmail('admin@lumen.com');
-      setPassword('admin123');
-    } else if (role === 'author') {
-      setEmail('author@lumen.com');
-      setPassword('author123');
-    } else {
-      setEmail('reader@lumen.com');
-      setPassword('reader123');
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,7 +33,7 @@ const Login = () => {
     setSuccessNotice('');
 
     if (!email.trim() || !password) {
-      setError('Please enter both email and password.');
+      setError('Please enter both your email address and password.');
       return;
     }
 
@@ -88,62 +68,15 @@ const Login = () => {
             <BookOpen className="w-5 h-5" />
           </div>
           <h1 className="font-serif text-3xl font-bold text-stone-900 tracking-tight">
-            Welcome to Lumen
+            Sign In to Lumen
           </h1>
           <p className="text-xs text-stone-600">
-            Sign in as an Administrator, Author, or Reader
+            Access your editorial account, articles, and community discussions
           </p>
         </div>
 
         {/* Login Form Card */}
         <div className="bg-white border border-[#EDE8DF] rounded-3xl p-6 sm:p-8 shadow-xs space-y-5">
-          {/* Quick Role Selector Tabs */}
-          <div>
-            <label className="block text-xs font-bold text-stone-700 mb-2">
-              Select Login Role
-            </label>
-            <div className="grid grid-cols-3 gap-2 bg-[#FAF7F2] p-1.5 rounded-2xl border border-[#EDE8DF]">
-              <button
-                type="button"
-                onClick={() => handleRoleSelect('admin')}
-                className={`py-2 px-1 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                  selectedRole === 'admin'
-                    ? 'bg-[#1A382B] text-white shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                <Shield className="w-3.5 h-3.5" />
-                Admin
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleRoleSelect('author')}
-                className={`py-2 px-1 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                  selectedRole === 'author'
-                    ? 'bg-[#1A382B] text-white shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                <PenLine className="w-3.5 h-3.5" />
-                Author
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleRoleSelect('reader')}
-                className={`py-2 px-1 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                  selectedRole === 'reader'
-                    ? 'bg-[#1A382B] text-white shadow-xs'
-                    : 'text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                <User className="w-3.5 h-3.5" />
-                Reader
-              </button>
-            </div>
-          </div>
-
           {/* Success Banner from Registration */}
           {successNotice && (
             <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs flex items-start gap-2.5 animate-in fade-in duration-150">
@@ -170,10 +103,7 @@ const Login = () => {
                   required
                   placeholder="name@domain.com"
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setSelectedRole('custom');
-                  }}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 bg-[#EFECE6] border border-transparent rounded-xl text-xs sm:text-sm text-stone-900 placeholder-[#9E988D] focus:outline-none focus:bg-white focus:border-[#1A382B] focus:ring-2 focus:ring-[#1A382B]/20 transition"
                 />
                 <Mail className="w-4 h-4 text-stone-400 absolute left-3.5 top-3" />
@@ -190,7 +120,7 @@ const Login = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="••••••••"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-10 py-2.5 bg-[#EFECE6] border border-transparent rounded-xl text-xs sm:text-sm text-stone-900 placeholder-[#9E988D] focus:outline-none focus:bg-white focus:border-[#1A382B] focus:ring-2 focus:ring-[#1A382B]/20 transition"
@@ -219,7 +149,7 @@ const Login = () => {
                 </>
               ) : (
                 <>
-                  <span>Sign In as {selectedRole === 'admin' ? 'Admin' : selectedRole === 'author' ? 'Author' : selectedRole === 'reader' ? 'Reader' : 'User'}</span>
+                  <span>Sign In</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
