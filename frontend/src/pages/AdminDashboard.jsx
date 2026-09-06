@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { userAPI, articleAPI, quizAPI } from '../services/api';
+import CommentsManagement from '../components/admin/CommentsManagement';
+import ReportsManagement from '../components/admin/ReportsManagement';
+import SubscriptionsManagement from '../components/admin/SubscriptionsManagement';
 
 import {
   ShieldCheck,
@@ -1330,25 +1333,13 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
         return renderQuizzes();
 
       case 'comments':
-        return renderPlaceholder(
-          'Comment Management',
-          'This section is ready for comment moderation once the comment API is available.',
-          MessageSquare
-        );
+        return <CommentsManagement />;
 
       case 'reports':
-        return renderPlaceholder(
-          'Reports',
-          'This section is ready for platform reports once the reporting API is available.',
-          Flag
-        );
+        return <ReportsManagement />;
 
       case 'subscriptions':
-        return renderPlaceholder(
-          'Subscriptions',
-          'This section is ready for subscription management once subscription APIs are available.',
-          CreditCard
-        );
+        return <SubscriptionsManagement />;
 
       default:
         return renderOverview();
