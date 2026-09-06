@@ -59,6 +59,7 @@ export const userAPI = {
   deleteUser: (id) => API.delete(`/users/${id}`),
 };
 
+<<<<<<< HEAD
 // Admin Verification API Endpoints
 export const adminVerificationAPI = {
   getPendingArticles: () => API.get('/admin-verification/articles'),
@@ -110,6 +111,16 @@ export const notificationAPI = {
   getNotifications: () => API.get('/notifications'),
   markAsRead: (id) => API.patch(`/notifications/${id}/read`),
   markAllAsRead: () => API.patch('/notifications/read-all'),
+=======
+// Comment & Discussion API Endpoints (Sadanand Module)
+export const commentAPI = {
+  getCommentsByTarget: (targetId) => API.get(`/comments/target/${targetId}`),
+  createComment: (data) => API.post('/comments', data),
+  updateComment: (id, data) => API.put(`/comments/${id}`, data),
+  deleteComment: (id) => API.delete(`/comments/${id}`),
+  toggleReaction: (id, type = 'like') => API.post(`/comments/${id}/react`, { type }),
+  getRecentDiscussions: (limit = 8) => API.get('/comments/recent', { params: { limit } }),
+>>>>>>> 959f237 (Update user management)
 };
 
 export default API;
