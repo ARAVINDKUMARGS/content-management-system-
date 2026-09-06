@@ -333,6 +333,61 @@ const getMyArticles = async (req, res) => {
   }
 };
 
+const getMyArticleById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = getUserId(req);
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid article ID.',
+      });
+    }
+
+    /*
+     * First find the article WITHOUT populating the author.
+     * This keeps article.author as the ObjectId so that
+     * ownership checking works correctly.
+     */
+    const article = await Article.findById(id);
+
+    if (!article) {
+      return res.status(404).json({
+        success: false,
+        message: 'Article not found.',
+      });
+    }
+
+    /*
+     * Check ownership before populating the author.
+     */
+    if (!isArticleOwner(article, userId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to access this article.',
+      });
+    }
+
+    /*
+     * Now populate the author after ownership has been verified.
+     */
+    await article.populate('author', 'name avatar bio');
+
+    return res.status(200).json({
+      success: true,
+      article,
+    });
+  } catch (error) {
+    console.error('[Get My Article Error]:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve article.',
+    });
+  }
+};
+
 // Like article
 const likeArticle = async (req, res) => {
   try {
@@ -419,6 +474,78 @@ const deleteArticle = async (req, res) => {
   }
 };
 
+const reviewArticle = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, reviewFeedback } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid article ID.',
+      });
+    }
+
+    const allowedStatuses = [
+      'published',
+      'changes_requested',
+      'rejected',
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Invalid review status. Allowed values: published, changes_requested, rejected.',
+      });
+    }
+
+    if (
+      ['changes_requested', 'rejected'].includes(status) &&
+      (!reviewFeedback || !reviewFeedback.trim())
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Review feedback is required for this status.',
+      });
+    }
+
+    const article = await Article.findById(id);
+
+    if (!article) {
+      return res.status(404).json({
+        success: false,
+        message: 'Article not found.',
+      });
+    }
+
+    article.status = status;
+    article.reviewFeedback = reviewFeedback
+      ? reviewFeedback.trim()
+      : '';
+
+    await article.save();
+
+    const reviewedArticle = await Article.findById(article._id).populate(
+      'author',
+      'name avatar bio'
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Article status changed to '${status}'.`,
+      article: reviewedArticle,
+    });
+  } catch (error) {
+    console.error('[Review Article Error]:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to review article.',
+    });
+  }
+};
+
 // ==========================================
 // GET ALL ARTICLES - ADMIN
 // ==========================================
@@ -452,6 +579,7 @@ module.exports = {
   updateArticle,
   submitArticle,
   getMyArticles,
+  getMyArticleById,
   likeArticle,
   incrementViews,
   deleteArticle,

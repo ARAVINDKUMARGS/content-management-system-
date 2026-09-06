@@ -1,25 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-<<<<<<< HEAD
 import { BookOpen, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, PenLine, User, Sparkles } from 'lucide-react';
-=======
-import { BookOpen, Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
->>>>>>> 959f237 (Update user management)
 
 const Login = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
 
-<<<<<<< HEAD
   const [selectedRole, setSelectedRole] = useState(location.state?.registeredRole || 'admin');
   const [email, setEmail] = useState(location.state?.registeredEmail || 'admin@lumen.com');
   const [password, setPassword] = useState(location.state?.registeredEmail ? '' : 'password123');
-=======
-  const [email, setEmail] = useState(location.state?.registeredEmail || '');
-  const [password, setPassword] = useState('');
->>>>>>> 959f237 (Update user management)
+
+  // const [email, setEmail] = useState(location.state?.registeredEmail || '');
+  //const [password, setPassword] = useState('');
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [successNotice, setSuccessNotice] = useState(location.state?.successMessage || '');
@@ -37,7 +32,7 @@ const Login = () => {
     }
   }, [location.state]);
 
-<<<<<<< HEAD
+
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
     setError('');
@@ -79,8 +74,7 @@ const Login = () => {
     }
   };
 
-=======
->>>>>>> 959f237 (Update user management)
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');

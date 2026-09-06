@@ -12,16 +12,13 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
-<<<<<<< HEAD
 import { HomePage, BrowsePage } from './pages/Placeholders';
 import ArticleDetails from './pages/ArticleDetails';
 import WriteArticle from './pages/WriteArticle';
 import ArticleConfirmation from './pages/ArticleConfirmation';
 import AdminVerification from './pages/AdminVerification';
-=======
 import DiscussionPage from './pages/DiscussionPage';
-import { HomePage, BrowsePage, WritePage } from './pages/Placeholders';
->>>>>>> 959f237 (Update user management)
+import { HomePage, BrowsePage } from './pages/Placeholders';
 
 function App() {
   return (
@@ -35,11 +32,8 @@ function App() {
               {/* Public Routes */}
               <Route path="/" element={<HomePage />} />
               <Route path="/browse" element={<BrowsePage />} />
-<<<<<<< HEAD
               <Route path="/browse/:id" element={<ArticleDetails />} />
-=======
               <Route path="/discussions" element={<DiscussionPage />} />
->>>>>>> 959f237 (Update user management)
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 
