@@ -12,6 +12,7 @@ const {
   deleteArticle,
   submitArticle,
   reviewArticle,
+  getAllArticlesForAdmin,
 } = require('../controllers/articleController');
 
 const {
@@ -146,6 +147,12 @@ router.patch(
   reviewArticle
 );
 
+router.get(
+  '/admin/all',
+  authenticateUser,
+  authorizeRole('admin'),
+  getAllArticlesForAdmin
+);
 
 /*
  * Get a single published article

@@ -9,6 +9,14 @@ const API = axios.create({
   timeout: 10000,
 });
 
+const QUIZ_API = axios.create({
+  baseURL: import.meta.env.VITE_QUIZ_API_URL || 'http://localhost:5001/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+});
+
 // Request Interceptor: Attach JWT Bearer token if available
 API.interceptors.request.use(
   (config) => {
@@ -121,6 +129,21 @@ export const articleAPI = {
   // Admin
   reviewArticle: (id, data) =>
     API.patch(`/articles/${id}/review`, data),
+
+  getAllArticlesForAdmin: () =>
+    API.get('/articles/admin/all'),
+};
+
+// Quiz Management API Endpoints
+export const quizAPI = {
+  getAllQuizzes: () => QUIZ_API.get('/quizzes'),
+  getQuizById: (id) => QUIZ_API.get(`/quizzes/${id}`),
+
+  updateQuiz: (id, data) =>
+    QUIZ_API.put(`/quizzes/${id}`, data),
+
+  deleteQuiz: (id) =>
+    QUIZ_API.delete(`/quizzes/${id}`),
 };
 
 export default API;

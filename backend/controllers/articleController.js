@@ -649,6 +649,32 @@ const reviewArticle = async (req, res) => {
   }
 };
 
+// ==========================================
+// GET ALL ARTICLES - ADMIN
+// ==========================================
+
+const getAllArticlesForAdmin = async (req, res) => {
+  try {
+    const articles = await Article.find({status: { $ne: 'draft' },})
+      .populate('author', 'name email role')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: articles.length,
+      articles,
+    });
+  } catch (error) {
+    console.error('Get Admin Articles Error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch articles',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getArticles,
   getArticleById,
@@ -659,4 +685,5 @@ module.exports = {
   deleteArticle,
   submitArticle,
   reviewArticle,
+  getAllArticlesForAdmin,
 };
