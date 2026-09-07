@@ -13,9 +13,11 @@ const API = axios.create({
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('lumen_token');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => {
@@ -31,10 +33,14 @@ API.interceptors.response.use(
       const isAuthRoute =
         error.config?.url?.includes('/auth/login') ||
         error.config?.url?.includes('/auth/register');
+
       if (!isAuthRoute) {
-        console.warn('[Lumen Auth API] Session expired or unauthorized.');
+        console.warn(
+          '[Lumen Auth API] Session expired or unauthorized.'
+        );
       }
     }
+
     return Promise.reject(error);
   }
 );
@@ -49,15 +55,27 @@ export const authAPI = {
 
 // User Management API Endpoints
 export const userAPI = {
+  // Current user's profile
   getProfile: () => API.get('/users/profile'),
+
+  // Update current user's profile
   updateProfile: (data) => API.put('/users/profile', data),
+
+  // Public user profile
   getUserById: (id) => API.get(`/users/${id}`),
+
   // Admin Endpoints
   getAllUsers: () => API.get('/users'),
+
   createUserByAdmin: (data) => API.post('/users', data),
-  updateUserRole: (id, role) => API.put(`/users/${id}/role`, { role }),
-  deleteUser: (id) => API.delete(`/users/${id}`),
+
+  updateUserRole: (id, role) =>
+    API.put(`/users/${id}/role`, { role }),
+
+  deleteUser: (id) =>
+    API.delete(`/users/${id}`),
 };
+
 // Admin Verification API Endpoints
 export const adminVerificationAPI = {
   // Get content waiting for admin review
@@ -66,7 +84,10 @@ export const adminVerificationAPI = {
 
   getPendingQuizzes: () =>
     API.get('/admin-verification/quizzes'),
-getStats: () => API.get("/admin-verification/stats"),
+
+  getStats: () =>
+    API.get('/admin-verification/stats'),
+
   // Article actions
   approveArticle: (id) =>
     API.put(`/admin-verification/articles/${id}/approve`),
@@ -91,23 +112,33 @@ getStats: () => API.get("/admin-verification/stats"),
     }),
 
   requestQuizChanges: (id, comment) =>
-    API.put(`/admin-verification/quizzes/${id}/request-changes`, {
-      comment,
-    }),
+    API.put(
+      `/admin-verification/quizzes/${id}/request-changes`,
+      {
+        comment,
+      }
+    ),
 };
-
 
 // Article Management API Endpoints
 export const articleAPI = {
   // Public
-  getArticles: () => API.get('/articles'),
-  getArticleById: (id) => API.get(`/articles/${id}`),
+  getArticles: () =>
+    API.get('/articles'),
+
+  getArticleById: (id) =>
+    API.get(`/articles/${id}`),
 
   // Author
-  getMyArticles: () => API.get('/articles/my'),
-  getMyArticleById: (id) => API.get(`/articles/my/${id}`),
+  // IMPORTANT: Backend route is /articles/mine
+  getMyArticles: () =>
+    API.get('/articles/mine'),
 
-  createArticle: (data) => API.post('/articles', data),
+  getMyArticleById: (id) =>
+    API.get(`/articles/my/${id}`),
+
+  createArticle: (data) =>
+    API.post('/articles', data),
 
   updateArticle: (id, data) =>
     API.put(`/articles/${id}`, data),
