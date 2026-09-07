@@ -14,10 +14,15 @@ import {
   ShieldCheck,
   Menu,
   X,
+<<<<<<< HEAD
   CheckCheck,
   Sparkles,
   Sun,
   Moon,
+=======
+  Clock,
+  MessageSquare,
+>>>>>>> 959f237 (Update user management)
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -139,17 +144,31 @@ const Navbar = () => {
   };
 
   const isHomeActive = location.pathname === '/';
+<<<<<<< HEAD
   const isBrowseActive = location.pathname.startsWith('/browse');
   const isWriteActive = location.pathname.startsWith('/write');
   const isAdminActive = location.pathname.startsWith('/admin');
   const isProfileActive = location.pathname === '/profile';
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+=======
+  const isBrowseActive = location.pathname === '/browse';
+  const isDiscussionActive = location.pathname.startsWith('/discussions');
+  const isWriteActive = location.pathname === '/write';
+  const isAdminActive = location.pathname.startsWith('/admin');
+  const isProfileActive = location.pathname === '/profile';
+  const unreadCount = notifications.filter((n) => n.unread).length;
+>>>>>>> 959f237 (Update user management)
 
   const navItems = [
     { to: '/', label: 'Home', icon: LayoutGrid, active: isHomeActive },
     { to: '/browse', label: 'Browse', icon: Search, active: isBrowseActive },
+<<<<<<< HEAD
     { to: '/write', label: 'Write', icon: PenLine, active: isWriteActive, show: isAuthor || isAdmin },
+=======
+    { to: '/discussions', label: 'Discussions', icon: MessageSquare, active: isDiscussionActive },
+    { to: '/write', label: 'Write', icon: PenLine, active: isWriteActive, show: isAuthor },
+>>>>>>> 959f237 (Update user management)
     {
       to: '/admin',
       label: 'Admin',
@@ -287,7 +306,19 @@ const Navbar = () => {
                         My Profile
                       </Link>
 
+<<<<<<< HEAD
                       {(isAuthor || isAdmin) && (
+=======
+                      <Link
+                        to="/discussions"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-stone-700 hover:bg-[#FAF7F2] transition"
+                      >
+                        <MessageSquare className="w-4 h-4 text-stone-500" />
+                        Community Discussions
+                      </Link>
+
+                      {isAuthor && (
+>>>>>>> 959f237 (Update user management)
                         <Link
                           to="/write"
                           className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-[#FAF7F2] dark:hover:bg-[#242C28] transition"

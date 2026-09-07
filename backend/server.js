@@ -66,6 +66,7 @@ app.get('/api/health', (req, res) => {
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+<<<<<<< HEAD
 const articleRoutes = require('./routes/articleRoutes');
 const adminVerificationRoutes = require('./routes/adminVerificationRoutes');
 const quizRoutes = require('./routes/quizRoutes');
@@ -79,12 +80,23 @@ app.use('/api/admin-verification', adminVerificationRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/quiz-attempts', quizAttemptRoutes);
 app.use('/api/notifications', notificationRoutes);
+=======
+const commentRoutes = require('./routes/commentRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/comments', commentRoutes);
+>>>>>>> 959f237 (Update user management)
 
 // Root route
 app.get('/', (req, res) => {
   res.json({
     message: 'Welcome to Lumen CMS API',
+<<<<<<< HEAD
     module: 'Full Stack Content Management System',
+=======
+    module: 'User Management, Authentication & Discussions (Sadanand)',
+>>>>>>> 959f237 (Update user management)
     documentation: '/api/health',
   });
 });
@@ -123,8 +135,15 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log('\n=================================================');
     console.log(`  🌿 Lumen CMS Server running on port ${PORT}`);
+<<<<<<< HEAD
     console.log(`  🔗 API Root: http://localhost:${PORT}/api/health`);
     console.log('=================================================\n');
+=======
+    console.log(`  🔗 API Root: http://localhost:${PORT}/api/auth`);
+    console.log(`  💬 Comments API: http://localhost:${PORT}/api/comments`);
+    console.log(`  🛡️ Modules: User Management, Auth & Discussions (Sadanand)`);
+    console.log(`=================================================\n`);
+>>>>>>> 959f237 (Update user management)
   });
 }
 
