@@ -1,311 +1,584 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
-const users = [
-  {
-    id: 1,
-    name: "Rakesh",
-    status: "Online",
-    avatar: "R",
-    lastMessage: "Hey! How are you?",
-    time: "10:42 AM",
-  },
-  {
-    id: 2,
-    name: "Sadanand",
-    status: "Online",
-    avatar: "S",
-    lastMessage: "Project update?",
-    time: "09:35 AM",
-  },
-  {
-    id: 3,
-    name: "Poojitha",
-    status: "Offline",
-    avatar: "P",
-    lastMessage: "Okay, thank you!",
-    time: "Yesterday",
-  },
-  {
-    id: 4,
-    name: "Sanika",
-    status: "Online",
-    avatar: "S",
-    lastMessage: "I will check it.",
-    time: "Yesterday",
-  },
-  {
-    id: 5,
-    name: "Ashmitha",
-    status: "Offline",
-    avatar: "A",
-    lastMessage: "See you tomorrow.",
-    time: "Monday",
-  },
-];
-
-const initialMessages = {
-  1: [
-    {
-      id: 1,
-      sender: "them",
-      text: "Hello Shyam! 👋",
-      time: "10:38 AM",
-    },
-    {
-      id: 2,
-      sender: "them",
-      text: "How is the project going?",
-      time: "10:39 AM",
-    },
-    {
-      id: 3,
-      sender: "me",
-      text: "Hey Rakesh! It's going well. 🚀",
-      time: "10:40 AM",
-    },
-    {
-      id: 4,
-      sender: "me",
-      text: "I'm currently working on the Personal Chat module.",
-      time: "10:41 AM",
-    },
-    {
-      id: 5,
-      sender: "them",
-      text: "Great! Let me know if you need anything.",
-      time: "10:42 AM",
-    },
-  ],
-  2: [
-    {
-      id: 1,
-      sender: "them",
-      text: "Hey Shyam!",
-      time: "09:30 AM",
-    },
-    {
-      id: 2,
-      sender: "them",
-      text: "Do you have any project update?",
-      time: "09:35 AM",
-    },
-  ],
-  3: [
-    {
-      id: 1,
-      sender: "them",
-      text: "Okay, thank you!",
-      time: "Yesterday",
-    },
-  ],
-  4: [
-    {
-      id: 1,
-      sender: "them",
-      text: "I will check it.",
-      time: "Yesterday",
-    },
-  ],
-  5: [
-    {
-      id: 1,
-      sender: "them",
-      text: "See you tomorrow.",
-      time: "Monday",
-    },
-  ],
-};
+const API_URL = "http://localhost:5000/api";
 
 function App() {
-  const [selectedUser, setSelectedUser] = useState(users[0]);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(search.toLowerCase())
+  // =========================
+  // FETCH USERS
+  // =========================
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoadingUsers(true);
+        setError("");
+
+        const response = await fetch(`${API_URL}/users`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch users");
+        }
+
+        const data = await response.json();
+
+        const allUsers = data.users || [];
+
+        setUsers(allUsers);
+
+        // Shyam ko current user maanenge
+        const firstChatUser = allUsers.find(
+          (user) => user.name !== "Shyam"
+        );
+
+        if (firstChatUser) {
+          setSelectedUser(firstChatUser);
+        }
+      } catch (error) {
+        console.error("Fetch users error:", error);
+        setError(
+          "Unable to load users. Please check whether the backend is running."
+        );
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  // =========================
+  // CURRENT USER
+  // =========================
+  const currentUser = users.find(
+    (user) => user.name === "Shyam"
   );
 
-  const currentMessages = messages[selectedUser.id] || [];
+  // =========================
+  // FETCH MESSAGES
+  // =========================
+  useEffect(() => {
+    if (!selectedUser || !currentUser) {
+      return;
+    }
 
-  const getCurrentTime = () => {
-    return new Date().toLocaleTimeString([], {
+    const fetchMessages = async () => {
+      try {
+        setLoadingMessages(true);
+        setError("");
+
+        const response = await fetch(
+          `${API_URL}/messages/${selectedUser._id}?currentUserId=${currentUser._id}`
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch messages");
+        }
+
+        const data = await response.json();
+
+        setMessages(data.messages || []);
+      } catch (error) {
+        console.error("Fetch messages error:", error);
+
+        setMessages([]);
+
+        setError("Unable to load messages.");
+      } finally {
+        setLoadingMessages(false);
+      }
+    };
+
+    fetchMessages();
+  }, [selectedUser, currentUser]);
+
+  // =========================
+  // FILTER USERS
+  // =========================
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name !== "Shyam" &&
+      user.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // =========================
+  // FORMAT TIME
+  // =========================
+  const getCurrentTime = (date = new Date()) => {
+    return new Date(date).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
-  const handleSend = () => {
+  // =========================
+  // SEND MESSAGE
+  // =========================
+  const handleSend = async () => {
     const trimmedMessage = message.trim();
 
-    if (!trimmedMessage) return;
+    if (
+      !trimmedMessage ||
+      !selectedUser ||
+      !currentUser ||
+      sending
+    ) {
+      return;
+    }
 
-    const newMessage = {
-      id: Date.now(),
-      sender: "me",
-      text: trimmedMessage,
-      time: getCurrentTime(),
-    };
+    try {
+      setSending(true);
+      setError("");
 
-    setMessages((previousMessages) => ({
-      ...previousMessages,
-      [selectedUser.id]: [
-        ...(previousMessages[selectedUser.id] || []),
-        newMessage,
-      ],
-    }));
+      const response = await fetch(`${API_URL}/messages`, {
+        method: "POST",
 
-    setMessage("");
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          sender: currentUser._id,
+          receiver: selectedUser._id,
+          text: trimmedMessage,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
+      const data = await response.json();
+
+      if (data.message) {
+        setMessages((previousMessages) => [
+          ...previousMessages,
+          data.message,
+        ]);
+      }
+
+      setMessage("");
+    } catch (error) {
+      console.error("Send message error:", error);
+
+      setError("Message could not be sent.");
+    } finally {
+      setSending(false);
+    }
   };
 
+  // =========================
+  // ENTER KEY
+  // =========================
   const handleKeyDown = (event) => {
     if (event.key === "Enter") {
+      event.preventDefault();
       handleSend();
     }
   };
 
+  // =========================
+  // LOADING SCREEN
+  // =========================
+  if (loadingUsers) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-content">
+          <div className="logo-icon">L</div>
+
+          <h2>Loading Lumen...</h2>
+
+          <p>Connecting to your chats</p>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================
+  // CURRENT USER NOT FOUND
+  // =========================
+  if (!currentUser) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-content">
+          <div className="logo-icon">L</div>
+
+          <h2>Shyam user not found</h2>
+
+          <p>
+            Please make sure Shyam exists in MongoDB.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================
+  // NO CHAT USER
+  // =========================
+  if (!selectedUser) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-content">
+          <div className="logo-icon">L</div>
+
+          <h2>No users found</h2>
+
+          <p>Please check your database.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================
+  // MAIN UI
+  // =========================
   return (
     <div className="app">
-      {/* Sidebar */}
+
+      {/* ================= SIDEBAR ================= */}
       <aside className="sidebar">
+
         <div className="sidebar-header">
+
           <div className="logo">
-            <div className="logo-icon">L</div>
-            <span>Lumen</span>
+
+            <div className="logo-icon">
+              L
+            </div>
+
+            <span>
+              Lumen
+            </span>
+
           </div>
 
-          <button className="new-chat-btn" title="New Chat">
+          <button
+            className="new-chat-btn"
+            title="New Chat"
+          >
             +
           </button>
+
         </div>
 
+        {/* Search */}
+
         <div className="search-box">
-          <span>⌕</span>
+
+          <span>
+            ⌕
+          </span>
 
           <input
             type="text"
             placeholder="Search chats..."
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
           />
+
         </div>
 
-        <div className="chat-label">MESSAGES</div>
+        <div className="chat-label">
+          MESSAGES
+        </div>
+
+        {/* Users */}
 
         <div className="user-list">
-          {filteredUsers.map((user) => (
-            <button
-              key={user.id}
-              className={`user-item ${
-                selectedUser.id === user.id ? "active" : ""
-              }`}
-              onClick={() => setSelectedUser(user)}
-            >
-              <div className="avatar">
-                {user.avatar}
 
-                <span
-                  className={`status-dot ${
-                    user.status === "Online" ? "online" : "offline"
-                  }`}
-                />
-              </div>
+          {filteredUsers.length === 0 ? (
 
-              <div className="user-info">
-                <div className="user-top">
-                  <strong>{user.name}</strong>
-                  <small>{user.time}</small>
+            <div className="empty-chat">
+              <p>
+                No users found.
+              </p>
+            </div>
+
+          ) : (
+
+            filteredUsers.map((user) => (
+
+              <button
+                key={user._id}
+                className={`user-item ${
+                  selectedUser._id === user._id
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  setSelectedUser(user)
+                }
+              >
+
+                <div className="avatar">
+
+                  {user.avatar ||
+                    user.name.charAt(0)}
+
+                  <span
+                    className={`status-dot ${
+                      user.status === "online"
+                        ? "online"
+                        : "offline"
+                    }`}
+                  />
+
                 </div>
 
-                <p>{user.lastMessage}</p>
-              </div>
-            </button>
-          ))}
+                <div className="user-info">
+
+                  <div className="user-top">
+
+                    <strong>
+                      {user.name}
+                    </strong>
+
+                    <small>
+                      {user.lastMessageTime
+                        ? getCurrentTime(
+                            user.lastMessageTime
+                          )
+                        : ""}
+                    </small>
+
+                  </div>
+
+                  <p>
+                    {user.lastMessage ||
+                      "Start a conversation"}
+                  </p>
+
+                </div>
+
+              </button>
+
+            ))
+
+          )}
+
         </div>
+
+        {/* Profile */}
 
         <div className="sidebar-footer">
-          <div className="profile-avatar">S</div>
 
-          <div>
-            <strong>Shyam</strong>
-            <span>Author</span>
+          <div className="profile-avatar">
+            {currentUser.avatar ||
+              currentUser.name.charAt(0)}
           </div>
 
-          <button className="settings-btn">⚙</button>
+          <div>
+
+            <strong>
+              Shyam
+            </strong>
+
+            <span>
+              Author
+            </span>
+
+          </div>
+
+          <button className="settings-btn">
+            ⚙
+          </button>
+
         </div>
+
       </aside>
 
-      {/* Chat Area */}
+      {/* ================= CHAT AREA ================= */}
+
       <main className="chat-area">
+
+        {/* Header */}
+
         <header className="chat-header">
+
           <div className="chat-user">
+
             <div className="avatar large">
-              {selectedUser.avatar}
+
+              {selectedUser.avatar ||
+                selectedUser.name.charAt(0)}
 
               <span
                 className={`status-dot ${
-                  selectedUser.status === "Online" ? "online" : "offline"
+                  selectedUser.status === "online"
+                    ? "online"
+                    : "offline"
                 }`}
               />
+
             </div>
 
             <div>
-              <h2>{selectedUser.name}</h2>
+
+              <h2>
+                {selectedUser.name}
+              </h2>
 
               <span
                 className={
-                  selectedUser.status === "Online"
+                  selectedUser.status === "online"
                     ? "online-text"
                     : "offline-text"
                 }
               >
-                ● {selectedUser.status}
+                ●{" "}
+                {selectedUser.status === "online"
+                  ? "Online"
+                  : "Offline"}
               </span>
+
             </div>
+
           </div>
 
           <div className="header-actions">
-            <button title="Search">⌕</button>
-            <button title="More">⋮</button>
+
+            <button title="Search">
+              ⌕
+            </button>
+
+            <button title="More">
+              ⋮
+            </button>
+
           </div>
+
         </header>
 
+        {/* Error */}
+
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
         {/* Messages */}
+
         <section className="messages">
+
           <div className="date-divider">
-            <span>Today</span>
+            <span>
+              Today
+            </span>
           </div>
 
-          {currentMessages.map((item) => (
-            <div
-              key={item.id}
-              className={`message ${
-                item.sender === "me" ? "sent" : "received"
-              }`}
-            >
-              {item.sender === "them" && (
-                <div className="message-avatar">
-                  {selectedUser.avatar}
-                </div>
-              )}
+          {loadingMessages ? (
 
-              <div>
-                <div className="message-bubble">{item.text}</div>
+            <div className="empty-chat">
 
-                <span className="message-time">
-                  {item.time}
+              <p>
+                Loading messages...
+              </p>
 
-                  {item.sender === "me" && " ✓✓"}
-                </span>
-              </div>
             </div>
-          ))}
+
+          ) : messages.length === 0 ? (
+
+            <div className="empty-chat">
+
+              <div className="empty-avatar">
+                {selectedUser.avatar ||
+                  selectedUser.name.charAt(0)}
+              </div>
+
+              <h3>
+                No messages yet
+              </h3>
+
+              <p>
+                Start a conversation with{" "}
+                {selectedUser.name}.
+              </p>
+
+            </div>
+
+          ) : (
+
+            messages.map((item) => {
+
+              const senderId =
+                typeof item.sender === "object"
+                  ? item.sender._id
+                  : item.sender;
+
+              const isMine =
+                String(senderId) ===
+                String(currentUser._id);
+
+              return (
+
+                <div
+                  key={item._id}
+                  className={`message ${
+                    isMine
+                      ? "sent"
+                      : "received"
+                  }`}
+                >
+
+                  {!isMine && (
+
+                    <div className="message-avatar">
+
+                      {selectedUser.avatar ||
+                        selectedUser.name.charAt(0)}
+
+                    </div>
+
+                  )}
+
+                  <div>
+
+                    <div className="message-bubble">
+                      {item.text}
+                    </div>
+
+                    <span className="message-time">
+
+                      {getCurrentTime(
+                        item.createdAt
+                      )}
+
+                      {isMine && " ✓✓"}
+
+                    </span>
+
+                  </div>
+
+                </div>
+
+              );
+            })
+
+          )}
+
         </section>
 
         {/* Input */}
+
         <div className="message-input-area">
-          <button className="input-action" title="Attach file">
+
+          <button
+            className="input-action"
+            title="Attach file"
+          >
             📎
           </button>
 
@@ -313,11 +586,17 @@ function App() {
             type="text"
             placeholder={`Message ${selectedUser.name}...`}
             value={message}
-            onChange={(event) => setMessage(event.target.value)}
+            onChange={(event) =>
+              setMessage(event.target.value)
+            }
             onKeyDown={handleKeyDown}
+            disabled={sending}
           />
 
-          <button className="emoji-btn" title="Emoji">
+          <button
+            className="emoji-btn"
+            title="Emoji"
+          >
             🙂
           </button>
 
@@ -325,11 +604,18 @@ function App() {
             className="send-btn"
             onClick={handleSend}
             title="Send message"
+            disabled={
+              sending ||
+              !message.trim()
+            }
           >
-            ➤
+            {sending ? "..." : "➤"}
           </button>
+
         </div>
+
       </main>
+
     </div>
   );
 }
