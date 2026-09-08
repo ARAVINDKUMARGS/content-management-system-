@@ -250,6 +250,34 @@ export const notificationAPI = {
   markAllAsRead: () =>
     API.patch('/notifications/read-all'),
 };
+// Author Subscription API
+// ======================================================
+// Author Subscription API
+// ======================================================
+
+export const subscriptionAPI = {
+  // Subscribe to an author
+  subscribe: (authorId) =>
+    API.post(`/subscriptions/${authorId}`),
+
+  // Unsubscribe from an author
+  unsubscribe: (authorId) =>
+    API.delete(`/subscriptions/${authorId}`),
+
+  // Check current subscription status
+  getStatus: (authorId) =>
+    API.get(`/subscriptions/status/${authorId}`),
+
+  // Get all subscriptions for current user
+  getMySubscriptions: () =>
+    API.get('/subscriptions'),
+
+  // Get subscriber count
+  getAuthorSubscriberCount: (authorId) =>
+    API.get(
+      `/subscriptions/author/${authorId}/count`
+    ),
+};
 
 // ======================================================
 // Comment & Discussion API
