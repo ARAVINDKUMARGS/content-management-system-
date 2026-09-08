@@ -1,7 +1,15 @@
-import QuizAttempt from './pages/QuizAttempt';
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import QuizAttempt from './pages/QuizAttempt';
+
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
+
 import { AuthProvider } from './context/AuthContext';
+
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -11,14 +19,18 @@ import RoleRoute from './components/RoleRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import PublicProfile from './pages/PublicProfile';
+
 import AdminDashboard from './pages/AdminDashboard';
+import AdminVerification from './pages/AdminVerification';
+
 import { HomePage, BrowsePage } from './pages/Placeholders';
+
 import ArticleDetails from './pages/ArticleDetails';
 import WriteArticle from './pages/WriteArticle';
 import ArticleConfirmation from './pages/ArticleConfirmation';
-import AdminVerification from './pages/AdminVerification';
+
 import DiscussionPage from './pages/DiscussionPage';
-import { HomePage, BrowsePage } from './pages/Placeholders';
 
 function App() {
   return (
@@ -26,18 +38,53 @@ function App() {
       <Router>
         <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-stone-900 selection:bg-[#1A382B] selection:text-white">
           <Navbar />
-          
+
           <main className="flex-1">
             <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/browse" element={<BrowsePage />} />
-              <Route path="/browse/:id" element={<ArticleDetails />} />
-              <Route path="/discussions" element={<DiscussionPage />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
 
-              {/* Protected User Profile Route */}
+              {/* ================================================= */}
+              {/* PUBLIC ROUTES */}
+              {/* ================================================= */}
+
+              <Route
+                path="/"
+                element={<HomePage />}
+              />
+
+              <Route
+                path="/browse"
+                element={<BrowsePage />}
+              />
+
+              {/* Article details */}
+              <Route
+                path="/browse/:id"
+                element={<ArticleDetails />}
+              />
+
+              {/* Discussions */}
+              <Route
+                path="/discussions"
+                element={<DiscussionPage />}
+              />
+
+              {/* Login */}
+              <Route
+                path="/login"
+                element={<Login />}
+              />
+
+              {/* Register */}
+              <Route
+                path="/register"
+                element={<Register />}
+              />
+
+
+              {/* ================================================= */}
+              {/* LOGGED-IN USER PROFILE */}
+              {/* ================================================= */}
+
               <Route
                 path="/profile"
                 element={
@@ -47,7 +94,22 @@ function App() {
                 }
               />
 
-              {/* Protected Quiz Attempt Routes */}
+
+              {/* ================================================= */}
+              {/* PUBLIC USER PROFILE */}
+              {/* Example: /profile/64f123abc... */}
+              {/* ================================================= */}
+
+              <Route
+                path="/profile/:id"
+                element={<PublicProfile />}
+              />
+
+
+              {/* ================================================= */}
+              {/* PROTECTED QUIZ ROUTES */}
+              {/* ================================================= */}
+
               <Route
                 path="/quiz"
                 element={
@@ -56,6 +118,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
               <Route
                 path="/quiz/:id"
                 element={
@@ -65,7 +128,11 @@ function App() {
                 }
               />
 
-              {/* Role Restricted Routes */}
+
+              {/* ================================================= */}
+              {/* WRITE ARTICLE */}
+              {/* ================================================= */}
+
               <Route
                 path="/write"
                 element={
@@ -88,6 +155,11 @@ function App() {
                 }
               />
 
+
+              {/* ================================================= */}
+              {/* ARTICLE CONFIRMATION */}
+              {/* ================================================= */}
+
               <Route
                 path="/article-confirmation"
                 element={
@@ -99,6 +171,11 @@ function App() {
                 }
               />
 
+
+              {/* ================================================= */}
+              {/* ADMIN DASHBOARD */}
+              {/* ================================================= */}
+
               <Route
                 path="/admin"
                 element={
@@ -109,6 +186,12 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+
+              {/* ================================================= */}
+              {/* ADMIN VERIFICATION */}
+              {/* ================================================= */}
+
               <Route
                 path="/admin/verification"
                 element={
@@ -120,8 +203,16 @@ function App() {
                 }
               />
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+
+              {/* ================================================= */}
+              {/* FALLBACK */}
+              {/* ================================================= */}
+
+              <Route
+                path="*"
+                element={<Navigate to="/" replace />}
+              />
+
             </Routes>
           </main>
 

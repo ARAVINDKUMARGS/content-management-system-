@@ -7,18 +7,17 @@ const {
   updateArticle,
   submitArticle,
   getMyArticles,
+  getPublishedArticlesByAuthor,
   likeArticle,
   incrementViews,
   deleteArticle,
   reviewArticle,
   getAllArticlesForAdmin,
-} = require('../controllers/articleController');
-
-const {
   approveArticle,
   rejectArticle,
-  requestArticleChanges,
-} = require('../controllers/adminVerificationController');
+  requestChanges,
+  publishArticle,
+} = require('../controllers/articleController');
 
 const {
   authenticateUser,
@@ -27,16 +26,42 @@ const {
 
 const router = express.Router();
 
-// Public routes
+// =====================================================
+// PUBLIC ROUTES
+// =====================================================
+
+// Get all articles
 router.get('/', getArticles);
-router.patch('/:id/view', incrementViews);
 
-// Logged-in author / user routes
-router.get('/mine', authenticateUser, getMyArticles);
-router.patch('/:id/like', authenticateUser, likeArticle);
+// Get published articles by a specific author
+router.get(
+  '/author/:id',
+  getPublishedArticlesByAuthor
+);
 
-// Article lookup (optional auth to populate user state)
-router.get('/:id', getArticleById);
+// Increment article views
+router.patch(
+  '/:id/view',
+  incrementViews
+);
+
+// =====================================================
+// LOGGED-IN USER / AUTHOR ROUTES
+// =====================================================
+
+// Get logged-in author's articles
+router.get(
+  '/mine',
+  authenticateUser,
+  getMyArticles
+);
+
+// Like an article
+router.patch(
+  '/:id/like',
+  authenticateUser,
+  likeArticle
+);
 
 // Create article
 router.post(
@@ -70,6 +95,18 @@ router.delete(
   deleteArticle
 );
 
+// =====================================================
+// ADMIN ARTICLE REVIEW ROUTES
+// =====================================================
+
+// Get all articles for admin
+router.get(
+  '/admin/all',
+  authenticateUser,
+  authorizeRole('admin'),
+  getAllArticlesForAdmin
+);
+
 // Admin: approve article
 router.patch(
   '/:id/approve',
@@ -86,28 +123,35 @@ router.patch(
   rejectArticle
 );
 
-// Admin: request changes
+// Admin: request article changes
 router.patch(
   '/:id/request-changes',
   authenticateUser,
   authorizeRole('admin'),
-  requestArticleChanges
+  requestChanges
 );
 
-router.get(
-  '/admin/all',
+// Admin: publish article
+router.patch(
+  '/:id/publish',
   authenticateUser,
   authorizeRole('admin'),
-  getAllArticlesForAdmin
+  publishArticle
 );
 
-/*
- * Get a single published article
- * GET /api/articles/:id
- *
- * This MUST be after /my and /my/:id.
- */
-router.get('/:id', getArticleById);
+// Admin: review article
+router.patch(
+  '/:id/review',
+  authenticateUser,
+  authorizeRole('admin'),
+  reviewArticle
+);
 
+// =====================================================
+// GET SINGLE ARTICLE
+// IMPORTANT: Keep this LAST because /:id is generic.
+// =====================================================
+
+router.get('/:id', getArticleById);
 
 module.exports = router;

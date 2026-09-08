@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import CommentSection from '../components/comments/CommentSection';
 import {
   BookOpen,
   LayoutGrid,
@@ -16,272 +15,61 @@ import {
   Eye,
   Clock,
   ThumbsUp,
-  MessageSquare,
-  X,
-  Share2,
-  Bookmark,
 } from 'lucide-react';
-
-export const ALL_ARTICLES = [
-  {
-    id: 'crispr-future-medicine',
-    title: 'How CRISPR Is Rewriting the Story of Human Disease',
-    category: 'Science',
-    categoryColor: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-    readTime: '7 min read',
-    author: 'Dr. Priya Mehta',
-    authorRole: 'author',
-    likes: 284,
-    excerpt: 'A quiet revolution in molecular biology has produced a tool precise enough to correct a single letter in DNA.',
-    fullContent: `Gene editing has evolved from theoretical biochemistry to active clinical therapeutics in less than a decade. 
-
-By utilizing targeted RNA guides coupled with Cas nucleases, researchers can now perform site-directed genomic edits with single-nucleotide fidelity. Current Phase II trials are actively tackling sickle-cell anemia, beta-thalassemia, and hereditary retinal dystrophies.
-
-However, the distinction between somatic cell edits (affecting solely the patient) and germline modifications (inherited across generations) remains the definitive ethical boundary for contemporary regulatory frameworks. Scientists worldwide are urging consensus on global biosafety governance before multi-target germline trials begin.`,
-  },
-  {
-    id: 'ai-reasoning-frontiers',
-    title: "The Night the Internet Was Born — and Almost Wasn't",
-    category: 'Technology',
-    categoryColor: 'bg-amber-50 text-amber-800 border-amber-200',
-    readTime: '6 min read',
-    author: 'Thomas Okeke',
-    authorRole: 'author',
-    likes: 198,
-    excerpt: "On October 29, 1969, a student typed two letters into a terminal at UCLA. The system crashed. The internet arrived.",
-    fullContent: `The ARPANET experiment began with the simplest possible ambition: transmit the command 'LOGIN' from a computer terminal at UCLA to a machine at Stanford Research Institute.
-
-After typing the letters 'L' and 'O', the system crashed. Yet those two letters proved that packet-switching across disparate computer networks was physically possible. Within decades, this humble node connection restructured human commerce, science, and discourse.
-
-Today, as distributed computing meets autonomous agent frameworks, we stand at an equivalent inflection point—where decentralized networks transition from transmitting static data packets to orchestrating autonomous intelligence.`,
-  },
-  {
-    id: 'climate-resilience-2030',
-    title: 'Rethinking Global Water Infrastructure for the Next Century',
-    category: 'Environment',
-    categoryColor: 'bg-teal-50 text-teal-800 border-teal-200',
-    readTime: '8 min read',
-    author: 'Thomas Okeke',
-    authorRole: 'author',
-    likes: 165,
-    excerpt: 'How coastal megacities and arid regions are deploying biomimetic sponge architecture to survive hydrologic extremes.',
-    fullContent: `Traditional concrete stormwater systems were designed for predictable seasonal rainfall patterns that no longer exist. 
-
-Modern hydrologists are shifting toward 'sponge city' designs—integrating permeable pavements, subsurface bioswales, and urban wetlands that capture, filter, and recharge local aquifers rather than flushing runoff into open seas.
-
-Early implementations in East Asia and Scandinavia have demonstrated that biological water reclamation not only mitigates 100-year flood events but substantially cools urban heat islands during peak summer heatwaves.`,
-  },
-  {
-    id: 'ancient-manuscripts-decoded',
-    title: 'Unlocking the Lost Scrolls of Herculaneum with Computer Vision',
-    category: 'History',
-    categoryColor: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-    readTime: '9 min read',
-    author: 'Thomas Okeke',
-    authorRole: 'author',
-    likes: 215,
-    excerpt: 'High-energy X-ray phase contrast tomography is revealing philosophical texts preserved by volcanic ash for two millennia.',
-    fullContent: `When Mount Vesuvius erupted in 79 AD, it carbonized hundreds of papyrus scrolls in the Villa of the Papyri at Herculaneum. For centuries, attempting to physically unroll these charred cylinders reduced them to dust.
-
-By combining high-resolution particle accelerator scans with volumetric deep-learning models, researchers have successfully segmented 3D papyrus layers and detected ink traces imperceptible to the human eye. 
-
-The initial decrypted passages reveal lost philosophical treatises on Epicurean ethics and music theory, opening a brand-new window into ancient Hellenistic thought.`,
-  },
-  {
-    id: 'longevity-cellular-repair',
-    title: 'The Molecular Hallmarks of Aging and Cellular Rejuvenation',
-    category: 'Medicine',
-    categoryColor: 'bg-rose-50 text-rose-800 border-rose-200',
-    readTime: '7 min read',
-    author: 'Dr. Priya Mehta',
-    authorRole: 'author',
-    likes: 310,
-    excerpt: 'From senolytics to partial epigenetic reprogramming, how targeting cellular decay is transforming preventative healthcare.',
-    fullContent: `Aging is no longer viewed as an inevitable thermodynamic erosion of biology, but as a coordinated set of biochemical pathways subject to medical intervention.
-
-Key therapeutic frontiers include:
-1. Senolytic clearance: Selectively eliminating senescent 'zombie' cells that secrete inflammatory factors.
-2. Telomere stabilization: Protecting chromosome ends without oncogenic risks.
-3. Mitochondrial rejuvenation: Restoring NAD+ pools and mitophagy efficiency.
-
-Clinical trials are already examining whether clearance of senescent cells can reverse osteoarthritis symptoms and restore cardiovascular compliance in elderly cohorts.`,
-  },
-  {
-    id: 'editorial-moderation-standards',
-    title: 'Community Governance & Editorial Integrity in Modern CMS',
-    category: 'Publishing',
-    categoryColor: 'bg-purple-50 text-purple-800 border-purple-200',
-    readTime: '5 min read',
-    author: 'Eleanor Vance',
-    authorRole: 'admin',
-    likes: 142,
-    excerpt: 'Establishing transparent reviewer rubrics, author attribution chains, and community moderation workflows.',
-    fullContent: `In an era of rapid AI-assisted publishing, human editorial integrity is more critical than ever. 
-
-Lumen enforces a tripartite governance structure:
-- Readers: Engage with essays, pose questions, and flag moderation anomalies.
-- Authors: Provide primary sources, defend thesis statements, and interact directly in comment threads.
-- Editors/Admins: Verify academic citations, maintain ethical standards, and oversee community moderation.
-
-By keeping discussions transparent and grounded in authorial expertise, we foster thoughtful discourse rather than algorithmic outrage.`,
-  },
-];
 
 /**
  * Home Page View
  */
 export const HomePage = () => {
   const { isAuthenticated, user } = useAuth();
-<<<<<<< HEAD
-  const [featuredArticle, setFeaturedArticle] = React.useState(null);
-  const [recentArticles, setRecentArticles] = React.useState([]);
-
-  React.useEffect(() => {
-    const fetchHomeArticles = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/articles?limit=6');
-        const data = await response.json();
-        if (data.success && data.articles && data.articles.length > 0) {
-          setFeaturedArticle(data.articles[0]);
-          setRecentArticles(data.articles.slice(1));
-        } else {
-          // Fallback initial seeded articles if backend DB is empty
-          const fallbackFeatured = {
-            _id: 'featured-1',
-            title: 'The Quantum Biology Revolution: How Nature Harnesses Coherence',
-            description: 'Exploration into how migratory birds and photosynthetic complexes exploit quantum superposition for near-perfect efficiency.',
-            category: 'Science',
-            readingTime: 6,
-            views: 1420,
-            likes: 184,
-            createdAt: new Date().toISOString(),
-            author: { name: 'Priya Mehta', role: 'Author' },
-            heroImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80',
-          };
-          const fallbackRecent = [
-            {
-              _id: 'recent-1',
-              title: 'CRISPR and the Ethics of Genetic Editing',
-              description: 'Examining the medical promises and societal implications of human germline modifications.',
-              category: 'Science',
-              readingTime: 8,
-              views: 950,
-              likes: 112,
-              author: { name: 'Priya Mehta' },
-            },
-            {
-              _id: 'recent-2',
-              title: 'Decarbonizing Heavy Industry: Breakthroughs in Green Hydrogen',
-              description: 'How high-temperature electrolysis could make zero-carbon steel and cement commercially viable.',
-              category: 'Environment',
-              readingTime: 5,
-              views: 640,
-              likes: 78,
-              author: { name: 'Thomas Okeke' },
-            },
-            {
-              _id: 'recent-3',
-              title: 'The Forgotten History of Silicon Valley\'s First Women Programmers',
-              description: 'Uncovering the pioneering women who wrote assembly code for the earliest electronic computers.',
-              category: 'History',
-              readingTime: 7,
-              views: 810,
-              likes: 95,
-              author: { name: 'Thomas Okeke' },
-            },
-          ];
-          setFeaturedArticle(fallbackFeatured);
-          setRecentArticles(fallbackRecent);
-        }
-      } catch (err) {
-        console.warn('Home fetch error:', err);
-      }
-    };
-
-    fetchHomeArticles();
-  }, []);
-=======
-  const [selectedArticle, setSelectedArticle] = useState(null);
->>>>>>> 959f237 (Update user management)
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
-      {/* Hero Featured Article */}
-      {featuredArticle && (
-        <div className="bg-white border border-[#EDE8DF] rounded-3xl overflow-hidden shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-0 group">
-          <div className="lg:col-span-7 p-8 sm:p-12 flex flex-col justify-between space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1 bg-emerald-50 text-[#1A382B] border border-emerald-200 rounded-full text-xs font-bold uppercase tracking-wider">
-                  FEATURED • {featuredArticle.category || 'Science'}
-                </span>
-                <span className="text-xs text-stone-500 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-stone-400" />
-                  {featuredArticle.readingTime || 6} min read
-                </span>
-                <span className="text-xs text-stone-500 flex items-center gap-1">
-                  <Eye className="w-3.5 h-3.5 text-stone-400" />
-                  {featuredArticle.views || 1420} views
-                </span>
-              </div>
-
-              <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 leading-tight group-hover:text-[#1A382B] transition">
-                <Link to={`/browse/${featuredArticle._id}`}>{featuredArticle.title}</Link>
-              </h1>
-
-              <p className="text-sm text-stone-600 font-serif leading-relaxed line-clamp-3">
-                {featuredArticle.description || featuredArticle.content?.slice(0, 180)}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-[#F5F2EB]">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-[#1A382B] text-white font-serif text-xs font-bold flex items-center justify-center">
-                  {featuredArticle.author?.name ? featuredArticle.author.name[0] : 'P'}
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-stone-900">{featuredArticle.author?.name || 'Priya Mehta'}</p>
-                  <p className="text-[10px] text-stone-500">Senior Science Writer</p>
-                </div>
-              </div>
-
-<<<<<<< HEAD
-              <Link
-                to={`/browse/${featuredArticle._id}`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1A382B] hover:bg-[#11261D] text-white text-xs font-bold rounded-xl shadow-xs transition"
-              >
-                <span>Read Story</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5 bg-stone-100 relative min-h-[260px] lg:min-h-full overflow-hidden">
-            <img
-              src={featuredArticle.heroImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80"}
-              alt={featuredArticle.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-            />
-          </div>
-=======
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <Link
-            to="/browse"
-            className="px-6 py-3 bg-[#1A382B] hover:bg-[#11261D] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition flex items-center gap-2"
-          >
-            <span>Browse All Articles & Discussions</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            to="/discussions"
-            className="px-6 py-3 bg-[#EFECE6] hover:bg-[#E7E2D9] text-stone-800 text-xs sm:text-sm font-semibold rounded-xl transition flex items-center gap-2"
-          >
-            <MessageSquare className="w-4 h-4 text-stone-600" />
-            <span>Community Forum</span>
-          </Link>
->>>>>>> 959f237 (Update user management)
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+      {/* Hero Banner */}
+      <div className="bg-white border border-[#EDE8DF] rounded-3xl p-8 sm:p-14 shadow-xs text-center space-y-6 relative overflow-hidden">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-full text-xs font-semibold text-stone-700">
+          <Sparkles className="w-3.5 h-3.5 text-[#D97736]" />
+          Editorial Content & Knowledge Platform
         </div>
-      )}
+
+        <h1 className="font-serif text-4xl sm:text-5xl font-bold text-stone-900 tracking-tight max-w-3xl mx-auto leading-tight">
+          Where Thoughtful Writing Meets Interactive Knowledge
+        </h1>
+
+        <p className="text-xs sm:text-base text-stone-600 max-w-2xl mx-auto font-normal leading-relaxed">
+          Lumen is an editorial publishing platform designed for curious
+          readers, subject matter authors, and editorial teams.
+        </p>
+
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          {isAuthenticated ? (
+            <Link
+              to="/profile"
+              className="px-6 py-3 bg-[#1A382B] hover:bg-[#11261D] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition flex items-center gap-2"
+            >
+              <span>Go to My Profile ({user?.role})</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/register"
+                className="px-6 py-3 bg-[#1A382B] hover:bg-[#11261D] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition flex items-center gap-2"
+              >
+                <span>Get Started</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              <Link
+                to="/login"
+                className="px-6 py-3 bg-[#EFECE6] hover:bg-[#E7E2D9] text-stone-800 text-xs sm:text-sm font-semibold rounded-xl transition"
+              >
+                Sign In
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
 
       {/* Platform Pillars */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -295,25 +83,23 @@ export const HomePage = () => {
           </h2>
 
           <p className="text-xs text-stone-600 leading-relaxed">
-            Curated essays, technical deep-dives, and investigative journalism written by domain experts.
+            Curated essays, technical deep-dives, and investigative science
+            journalism written by domain experts.
           </p>
         </div>
 
         <div className="bg-white border border-[#EDE8DF] rounded-3xl p-6 shadow-xs space-y-3">
           <div className="w-10 h-10 rounded-2xl bg-amber-50 text-[#D97736] flex items-center justify-center font-bold">
-            <MessageSquare className="w-5 h-5" />
+            <PenLine className="w-5 h-5" />
           </div>
-<<<<<<< HEAD
 
           <h2 className="font-serif text-lg font-bold text-stone-900">
             Interactive Knowledge
           </h2>
 
-=======
-          <h2 className="font-serif text-lg font-bold text-stone-900">Threaded Discussions</h2>
->>>>>>> 959f237 (Update user management)
           <p className="text-xs text-stone-600 leading-relaxed">
-            Engage with authors through multi-level comment replies, reactions, and community reflections.
+            Test and consolidate your understanding with article-aligned
+            quizzes and concept checkpoints.
           </p>
         </div>
 
@@ -321,120 +107,17 @@ export const HomePage = () => {
           <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-800 flex items-center justify-center font-bold">
             <ShieldCheck className="w-5 h-5" />
           </div>
-<<<<<<< HEAD
 
           <h2 className="font-serif text-lg font-bold text-stone-900">
             Editorial Standards
           </h2>
 
           <p className="text-xs text-stone-600 leading-relaxed">
-            Every submission undergoes peer review and editorial moderation before publication.
-=======
-          <h2 className="font-serif text-lg font-bold text-stone-900">Editorial Governance</h2>
-          <p className="text-xs text-stone-600 leading-relaxed">
-            Role-based moderation tools empowering Admins, Authors, and Readers with transparent standards.
->>>>>>> 959f237 (Update user management)
+            Every submission undergoes rigorous peer review and editorial
+            moderation before publication.
           </p>
         </div>
       </div>
-
-<<<<<<< HEAD
-      {/* Recent Articles Grid */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-2xl font-bold text-stone-900">Recent Articles</h2>
-          <Link to="/browse" className="text-xs font-bold text-[#1A382B] hover:underline flex items-center gap-1">
-            <span>Explore All</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-=======
-      {/* Featured Topics Section with Comments */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-serif text-2xl font-bold text-stone-900">Featured Topics & Discussions</h2>
-            <p className="text-xs text-stone-500">Click any topic to read the essay and participate in discussion</p>
-          </div>
-          <Link
-            to="/browse"
-            className="text-xs font-bold text-[#1A382B] hover:underline flex items-center gap-1"
-          >
-            View all ({ALL_ARTICLES.length}) <ArrowRight className="w-3.5 h-3.5" />
->>>>>>> 959f237 (Update user management)
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-<<<<<<< HEAD
-          {recentArticles.map((art) => (
-            <div
-              key={art._id}
-              className="bg-white border border-[#EDE8DF] rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-4 hover:border-stone-400 transition"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs text-stone-500">
-                  <span className="px-2.5 py-0.5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-full font-bold text-[10px] text-stone-700 uppercase tracking-wider">
-                    {art.category || 'General'}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-stone-400" />
-                    {art.readingTime || 5} min
-                  </span>
-                </div>
-
-                <h3 className="font-serif font-bold text-stone-900 text-lg leading-snug line-clamp-2 hover:text-[#1A382B]">
-                  <Link to={`/browse/${art._id}`}>{art.title}</Link>
-                </h3>
-
-                <p className="text-xs text-stone-600 font-serif leading-relaxed line-clamp-3">
-                  {art.description || art.content?.slice(0, 120)}
-=======
-          {ALL_ARTICLES.slice(0, 3).map((article) => (
-            <div
-              key={article.id}
-              onClick={() => setSelectedArticle(article)}
-              className="bg-white border border-[#EDE8DF] rounded-3xl p-6 shadow-xs space-y-4 hover:border-stone-400 transition cursor-pointer flex flex-col justify-between"
-            >
-              <div className="space-y-2.5">
-                <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${article.categoryColor}`}>
-                  {article.category}
-                </span>
-                <h3 className="font-serif text-lg font-bold text-stone-900 leading-snug">
-                  {article.title}
-                </h3>
-                <p className="text-xs text-stone-600 line-clamp-3 leading-relaxed">
-                  {article.excerpt}
->>>>>>> 959f237 (Update user management)
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-[#F5F2EB] flex items-center justify-between text-xs text-stone-500">
-<<<<<<< HEAD
-                <span className="font-medium text-stone-700">{art.author?.name || 'Editorial Team'}</span>
-                <Link to={`/browse/${art._id}`} className="text-[#1A382B] font-bold hover:underline">
-                  Read →
-                </Link>
-=======
-                <span>By {article.author}</span>
-                <span className="text-[#1A382B] font-bold flex items-center gap-1">
-                  <MessageSquare className="w-3.5 h-3.5" /> Discuss
-                </span>
->>>>>>> 959f237 (Update user management)
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-<<<<<<< HEAD
-=======
-
-      {/* Article Reader Modal with Comment Section */}
-      {selectedArticle && (
-        <ArticleReaderModal
-          article={selectedArticle}
-          onClose={() => setSelectedArticle(null)}
-        />
-      )}
->>>>>>> 959f237 (Update user management)
     </div>
   );
 };
@@ -443,7 +126,6 @@ export const HomePage = () => {
  * Browse View
  */
 export const BrowsePage = () => {
-<<<<<<< HEAD
   const categories = [
     'All Topics',
     'Science',
@@ -458,9 +140,9 @@ export const BrowsePage = () => {
 
   const [articles, setArticles] = React.useState([]);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [selectedCategory, setSelectedCategory] = React.useState('All Topics');
-  const [sortBy, setSortBy] = React.useState('latest');
-  const [quizOnly, setQuizOnly] = React.useState(false);
+  const [selectedCategory, setSelectedCategory] =
+    React.useState('All Topics');
+
   const [loading, setLoading] = React.useState(true);
 
   /*
@@ -468,25 +150,22 @@ export const BrowsePage = () => {
    */
   React.useEffect(() => {
     const fetchArticles = async () => {
-      setLoading(true);
       try {
         const token = localStorage.getItem('lumen_token');
-        const queryParams = new URLSearchParams();
-        if (searchQuery) queryParams.append('search', searchQuery.trim());
-        if (selectedCategory && selectedCategory !== 'All Topics') queryParams.append('category', selectedCategory);
-        if (sortBy) queryParams.append('sortBy', sortBy);
 
         const response = await fetch(
-          `http://localhost:5000/api/articles?${queryParams.toString()}`,
+          'http://localhost:5000/api/articles',
           {
             method: 'GET',
             headers: {
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              Authorization: `Bearer ${token}`,
             },
           }
         );
 
         const data = await response.json();
+
+        console.log('Browse articles:', data);
 
         if (data.success) {
           setArticles(data.articles || []);
@@ -498,33 +177,26 @@ export const BrowsePage = () => {
       }
     };
 
-    const timer = setTimeout(() => {
-      fetchArticles();
-    }, 300);
+    fetchArticles();
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [searchQuery, selectedCategory, sortBy]);
+  /*
+   * Search + category filtering
+   */
+  const filteredArticles = articles.filter((article) => {
+    const search = searchQuery.toLowerCase().trim();
 
-  const displayedArticles = quizOnly
-    ? articles.filter(a => a._id === '66c9f2b00000000000000001' || a._id === '66c9f2b00000000000000002' || a.title?.includes('CRISPR') || a.title?.includes('Internet'))
-    : articles;
-=======
-  const [selectedCategory, setSelectedCategory] = useState('All Topics');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedArticle, setSelectedArticle] = useState(null);
+    const matchesSearch =
+      article.title?.toLowerCase().includes(search) ||
+      article.description?.toLowerCase().includes(search) ||
+      article.category?.toLowerCase().includes(search);
 
-  const categories = ['All Topics', 'Science', 'Technology', 'Environment', 'History', 'Medicine', 'Publishing'];
-
-  const filteredArticles = ALL_ARTICLES.filter((article) => {
     const matchesCategory =
-      selectedCategory === 'All Topics' || article.category.toLowerCase() === selectedCategory.toLowerCase();
-    const matchesQuery =
-      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.author.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesQuery;
+      selectedCategory === 'All Topics' ||
+      article.category === selectedCategory;
+
+    return matchesSearch && matchesCategory;
   });
->>>>>>> 959f237 (Update user management)
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -532,7 +204,6 @@ export const BrowsePage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-<<<<<<< HEAD
           <h1 className="font-serif text-3xl font-bold text-stone-900">
             Browse Articles & Topics
           </h1>
@@ -542,68 +213,29 @@ export const BrowsePage = () => {
           </p>
         </div>
 
-        {/* Search & Sort Row */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-72">
-            <input
-              type="text"
-              placeholder="Search articles or topics..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-[#EDE8DF] rounded-xl text-xs text-stone-900 focus:outline-none focus:border-[#1A382B]"
-            />
-
-            <Search className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
-          </div>
-
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-2 bg-white border border-[#EDE8DF] rounded-xl text-xs font-semibold text-stone-700 focus:outline-none focus:border-[#1A382B]"
-          >
-            <option value="latest">Latest</option>
-            <option value="popular">Most Popular</option>
-            <option value="likes">Most Liked</option>
-          </select>
-=======
-          <h1 className="font-serif text-3xl font-bold text-stone-900">Browse Articles & Topics</h1>
-          <p className="text-xs text-stone-500 mt-1">
-            Every topic includes in-depth analysis and a dedicated community discussion thread
-          </p>
-        </div>
-
-        {/* Search Bar */}
+        {/* Search */}
         <div className="relative w-full md:w-72">
           <input
             type="text"
-            placeholder="Search articles, authors, topics..."
+            placeholder="Search articles or topics..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-white border border-[#EDE8DF] rounded-xl text-xs text-stone-900 focus:outline-none focus:border-[#1A382B]"
           />
+
           <Search className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
->>>>>>> 959f237 (Update user management)
         </div>
       </div>
 
-      {/* Category Pills & Has Quiz Filter */}
+      {/* Category Pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
         {categories.map((cat) => (
           <button
             key={cat}
-<<<<<<< HEAD
             type="button"
-            onClick={() => {
-              setSelectedCategory(cat);
-              setQuizOnly(false);
-            }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
-              selectedCategory === cat && !quizOnly
-=======
             onClick={() => setSelectedCategory(cat)}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition ${
               selectedCategory === cat
->>>>>>> 959f237 (Update user management)
                 ? 'bg-[#1A382B] text-white shadow-2xs'
                 : 'bg-white border border-[#EDE8DF] text-stone-700 hover:bg-[#EFECE6]'
             }`}
@@ -611,147 +243,53 @@ export const BrowsePage = () => {
             {cat}
           </button>
         ))}
-
-        <button
-          type="button"
-          onClick={() => setQuizOnly(!quizOnly)}
-          className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center gap-1.5 ${
-            quizOnly
-              ? 'bg-amber-600 text-white shadow-2xs'
-              : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100'
-          }`}
-        >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          Has Quiz
-        </button>
       </div>
 
-      {/* Articles Grid */}
-<<<<<<< HEAD
+      {/* Articles */}
       {loading ? (
-        <div className="text-center py-12 text-stone-500 text-xs font-medium">
-          Loading published content...
-=======
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredArticles.map((article) => (
-          <div
-            key={article.id}
-            onClick={() => setSelectedArticle(article)}
-            className="bg-white border border-[#EDE8DF] rounded-3xl p-6 shadow-xs space-y-4 hover:border-stone-400 transition cursor-pointer flex flex-col justify-between"
-          >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-stone-500">
-                <span className={`font-semibold px-2.5 py-0.5 rounded-full border ${article.categoryColor}`}>
-                  {article.category}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" /> {article.readTime}
-                </span>
-              </div>
-              <h3 className="font-serif text-lg font-bold text-stone-900 leading-snug">
-                {article.title}
-              </h3>
-              <p className="text-xs text-stone-600 leading-relaxed line-clamp-3">
-                {article.excerpt}
-              </p>
-            </div>
-
-            <div className="pt-3 border-t border-[#F5F2EB] flex items-center justify-between text-xs text-stone-500">
-              <span>By {article.author}</span>
-              <div className="flex items-center gap-2.5">
-                <span className="flex items-center gap-1 text-stone-700 font-medium">
-                  <ThumbsUp className="w-3.5 h-3.5 text-stone-400" /> {article.likes}
-                </span>
-                <span className="text-[#1A382B] font-bold flex items-center gap-1">
-                  <MessageSquare className="w-3.5 h-3.5" /> Read & Discuss
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Article Reader Modal with Comment Section */}
-      {selectedArticle && (
-        <ArticleReaderModal
-          article={selectedArticle}
-          onClose={() => setSelectedArticle(null)}
-        />
-      )}
-    </div>
-  );
-};
-
-/**
- * Reusable Article Reader Modal with Embedded Threaded Discussion
- */
-const ArticleReaderModal = ({ article, onClose }) => {
-  return (
-    <div className="fixed inset-0 bg-black/45 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in overflow-y-auto">
-      <div className="bg-white border border-[#EDE8DF] rounded-3xl p-6 sm:p-10 max-w-3xl w-full shadow-2xl space-y-8 my-8 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#EDE8DF]">
-          <div className="space-y-2">
-            <span
-              className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${article.categoryColor}`}
-            >
-              {article.category} • {article.readTime}
-            </span>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 leading-tight">
-              {article.title}
-            </h2>
-            <p className="text-xs text-stone-500">
-              Written by <strong>{article.author}</strong> ({article.authorRole})
-            </p>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="p-2 text-stone-400 hover:text-stone-700 rounded-xl hover:bg-stone-100 transition"
-            title="Close article reader"
-          >
-            <X className="w-5 h-5" />
-          </button>
->>>>>>> 959f237 (Update user management)
+        <div className="text-center py-12 text-stone-500">
+          Loading articles...
         </div>
-      ) : displayedArticles.length === 0 ? (
-        <div className="bg-white border border-[#EDE8DF] rounded-3xl p-12 text-center text-stone-500 space-y-2">
-          <p className="font-serif text-lg font-bold text-stone-800">No articles found</p>
-          <p className="text-xs">Try adjusting your search keywords or topic filter.</p>
+      ) : filteredArticles.length === 0 ? (
+        <div className="text-center py-12 text-stone-500">
+          No articles found.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {displayedArticles.map((article) => (
-            <Link
+
+          {filteredArticles.map((article) => (
+            <div
               key={article._id}
-              to={`/browse/${article._id}`}
-              className="bg-white border border-[#EDE8DF] rounded-3xl p-6 shadow-xs space-y-3 hover:border-stone-400 hover:shadow-md transition block group"
+              className="bg-white border border-[#EDE8DF] rounded-3xl p-6 shadow-xs space-y-3 hover:border-stone-400 transition"
             >
+
               {/* Category + Views */}
               <div className="flex items-center justify-between text-xs text-stone-500">
+
                 <span className="font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                   {article.category}
                 </span>
 
-<<<<<<< HEAD
                 <span className="flex items-center gap-1">
                   <Eye className="w-3.5 h-3.5" />
                   {article.views || 0}
                 </span>
+
               </div>
 
               {/* Title */}
-              <h3 className="font-serif text-xl font-bold text-stone-900 group-hover:text-[#1A382B] transition line-clamp-2">
+              <h3 className="font-serif text-xl font-bold text-stone-900">
                 {article.title}
               </h3>
 
               {/* Description */}
-              <p className="text-xs text-stone-600 leading-relaxed line-clamp-3">
-                {article.description || article.content?.slice(0, 140)}...
+              <p className="text-xs text-stone-600 leading-relaxed">
+                {article.description}
               </p>
 
               {/* Author + Likes */}
               <div className="pt-2 border-t border-[#F5F2EB] flex items-center justify-between text-xs text-stone-500">
+
                 <span>
                   By {article.author?.name || 'Unknown Author'}
                 </span>
@@ -760,22 +298,12 @@ const ArticleReaderModal = ({ article, onClose }) => {
                   <ThumbsUp className="w-3.5 h-3.5 text-stone-400" />
                   {article.likes || 0} likes
                 </span>
-              </div>
-            </Link>
-          ))}
-=======
-        {/* Article Body */}
-        <div className="text-xs sm:text-sm text-stone-800 leading-relaxed space-y-4 whitespace-pre-line font-serif">
-          {article.fullContent}
-        </div>
 
-        {/* Embedded Threaded Discussion Component */}
-        <div className="pt-6 border-t border-[#EDE8DF]">
-          <CommentSection
-            targetId={article.id}
-            targetTitle={article.title}
-          />
->>>>>>> 959f237 (Update user management)
+              </div>
+
+            </div>
+          ))}
+
         </div>
       )}
     </div>
@@ -1085,7 +613,7 @@ export const AdminPage = () => {
               </span>
 
               <span className="text-stone-500">
-                Submitted by Priya Mehta • 5 min read
+                Submitted by Priya Mehta ΓÇó 5 min read
               </span>
             </div>
 
@@ -1104,3 +632,4 @@ export const AdminPage = () => {
     </div>
   );
 };
+
