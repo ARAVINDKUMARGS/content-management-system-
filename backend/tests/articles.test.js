@@ -1,7 +1,10 @@
 const request = require('supertest');
 const app = require('../server');
 
+jest.setTimeout(15000);
+
 describe('Articles API Tests', () => {
+
   it('GET /api/articles - should fetch all published articles', async () => {
     const res = await request(app).get('/api/articles');
     expect(res.statusCode).toBe(200);

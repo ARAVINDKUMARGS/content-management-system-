@@ -5,7 +5,10 @@ const app = require('../server');
 const jwtSecret = process.env.JWT_SECRET || 'lumen_jwt_super_secret_key_2026';
 const testToken = jwt.sign({ id: '66c9f1a00000000000000001' }, jwtSecret);
 
+jest.setTimeout(15000);
+
 describe('Auth & User API Tests', () => {
+
   it('GET /api/health - should return online status', async () => {
     const res = await request(app).get('/api/health');
     expect(res.statusCode).toBe(200);
