@@ -1,23 +1,17 @@
 {
-  "name": "personal-chat",
+  "name": "lumen-cms",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "Lumen CMS — Integrated Full-Stack Content Management System",
+  "main": "backend/server.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "oxlint",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "start": "concurrently \"npm --prefix backend start\" \"npm --prefix frontend dev\"",
+    "dev": "concurrently \"npm --prefix backend start\" \"npm --prefix frontend dev\"",
+    "backend": "npm --prefix backend start",
+    "frontend": "npm --prefix frontend dev",
+    "test": "npm --prefix backend test"
   },
   "devDependencies": {
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
-    "@vitejs/plugin-react": "^6.1.0",
-    "oxlint": "^1.79.0",
-    "vite": "^8.2.2"
+    "concurrently": "^8.2.2"
   }
 }
