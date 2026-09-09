@@ -78,6 +78,9 @@ const quizAttemptRoutes = require('./routes/quizAttemptRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
+const messageRoutes = require('./routes/messageRoutes');
+
 // Authentication
 app.use('/api/auth', authRoutes);
 
@@ -101,6 +104,13 @@ app.use('/api/notifications', notificationRoutes);
 
 // Comments & Discussions
 app.use('/api/comments', commentRoutes);
+
+// Subscriptions
+app.use('/api/subscriptions', subscriptionRoutes);
+
+// Messages / Chat
+app.use('/api/messages', messageRoutes);
+
 
 // ======================================================
 // Root route
