@@ -551,24 +551,22 @@ const likeArticle = async (req, res) => {
       });
     }
 
-    const userId = req.user._id.toString();
-
-    if (article.likes?.some((id) => id.toString() === userId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'You have already liked this article.',
-      });
+    if (typeof article.likes === 'number') {
+      article.likes = (article.likes || 0) + 1;
+    } else if (Array.isArray(article.likes)) {
+      article.likes.push(req.user._id);
+    } else {
+      article.likes = 1;
     }
 
-    article.likes = article.likes || [];
-    article.likes.push(req.user._id);
-
     await article.save();
+
+    const likeCount = typeof article.likes === 'number' ? article.likes : article.likes.length;
 
     res.status(200).json({
       success: true,
       message: 'Article liked successfully.',
-      likes: article.likes.length,
+      likes: likeCount,
     });
   } catch (error) {
     console.error('Like article error:', error);
@@ -579,6 +577,7 @@ const likeArticle = async (req, res) => {
     });
   }
 };
+
 
 // Increment article views
 const incrementViews = async (req, res) => {
