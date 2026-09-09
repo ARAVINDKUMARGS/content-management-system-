@@ -557,36 +557,31 @@ const ArticleDetails = () => {
           .viewArticle(id)
           .catch(() => {});
 
-        // Fetch Related Articles
+        // Fetch Recommendations
         try {
-          const relRes = await fetch(
-            `http://localhost:5000/api/articles?category=${
-              art.category || 'Science'
-            }`
+          const recRes = await fetch(
+            `http://localhost:5000/api/articles/${id}/recommendations`
           );
 
-          const relData =
-            await relRes.json();
+          const recData = await recRes.json();
 
           if (
-            relData.success &&
-            relData.articles
+            recData.success &&
+            (recData.recommendations || recData.articles)
           ) {
             setRelatedArticles(
-              relData.articles
-                .filter(
-                  (a) =>
-                    a._id !== id
-                )
+              (recData.recommendations || recData.articles)
+                .filter((a) => a._id !== id && a.id !== id)
                 .slice(0, 3)
             );
           }
         } catch (rErr) {
           console.error(
-            'Related articles error:',
+            'Recommendations fetch error:',
             rErr
           );
         }
+
 
         // 2. Fetch Quiz if exists
         try {

@@ -161,6 +161,41 @@ app.use((err, req, res, next) => {
   });
 });
 
+const http = require('http');
+const { Server } = require('socket.io');
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  },
+});
+
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  console.log(`[Lumen Socket.io] Client connected: ${socket.id}`);
+
+  socket.on('join_room', (userId) => {
+    if (userId) {
+      socket.join(userId.toString());
+      console.log(`[Lumen Socket.io] Socket ${socket.id} joined room ${userId}`);
+    }
+  });
+
+  socket.on('send_message', (data) => {
+    if (data && data.receiver) {
+      io.to(data.receiver.toString()).emit('receive_message', data);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`[Lumen Socket.io] Client disconnected: ${socket.id}`);
+  });
+});
+
 // ======================================================
 // Server Port
 // ======================================================
@@ -172,16 +207,13 @@ const PORT = process.env.PORT || 5000;
 // ======================================================
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log('\n=================================================');
     console.log(`  🌿 Lumen CMS Server running on port ${PORT}`);
     console.log(`  🔗 API Root: http://localhost:${PORT}/api/health`);
-    console.log(`  💬 Comments API: http://localhost:${PORT}/api/comments`);
-    console.log(
-      '  🛡️ Modules: Full Stack CMS, User Management, Auth & Discussions'
-    );
+    console.log(`  💬 Real-Time Chat & Socket.io Enabled`);
     console.log('=================================================\n');
   });
 }
 
-module.exports = app;
+module.exports = app;
