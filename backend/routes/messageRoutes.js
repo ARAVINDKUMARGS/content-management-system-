@@ -62,10 +62,16 @@ router.post('/', async (req, res) => {
       text: text.trim(),
     });
 
+    const io = req.app.get('io');
+    if (io) {
+      io.to(receiver.toString()).emit('receive_message', message);
+    }
+
     res.status(201).json({
       success: true,
       message,
     });
+
   } catch (error) {
     res.status(500).json({
       success: false,

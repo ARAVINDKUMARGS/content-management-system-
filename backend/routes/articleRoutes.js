@@ -4,8 +4,10 @@ const {
   createArticle,
   getArticles,
   getArticleById,
+  getRecommendedArticles,
   updateArticle,
   submitArticle,
+
   getMyArticles,
   getPublishedArticlesByAuthor,
   likeArticle,
@@ -152,6 +154,10 @@ router.patch(
 // IMPORTANT: Keep this LAST because /:id is generic.
 // =====================================================
 
+// Recommended articles
+router.get('/:id/recommendations', getRecommendedArticles);
+
 router.get('/:id', getArticleById);
+
 
 module.exports = router;

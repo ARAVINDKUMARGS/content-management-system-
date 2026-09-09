@@ -746,10 +746,73 @@ const getAllArticlesForAdmin = async (req, res) => {
   }
 };
 
+// Get recommended articles related by category or tags
+const getRecommendedArticles = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
+      const currentArticle = await Article.findById(id);
+      if (!currentArticle) {
+        return res.status(404).json({ success: false, message: 'Article not found.' });
+      }
+
+      const recommendations = await Article.find({
+        _id: { $ne: id },
+        $or: [
+          { category: currentArticle.category },
+          { tags: { $in: currentArticle.tags || [] } }
+        ],
+      })
+        .populate('author', 'name email role avatar')
+        .limit(4);
+
+      if (recommendations.length < 4) {
+        const existingIds = recommendations.map(r => r._id).concat(id);
+        const fill = await Article.find({
+          _id: { $nin: existingIds }
+        })
+          .populate('author', 'name email role avatar')
+          .limit(4 - recommendations.length);
+
+        recommendations.push(...fill);
+      }
+
+      return res.status(200).json({
+        success: true,
+        count: recommendations.length,
+        recommendations,
+      });
+    }
+
+    const articleStore = require('../models/articleStore');
+    const all = articleStore.inMemoryArticles || [];
+    const current = all.find(a => a._id === id || a.id === id);
+    let list = all.filter(a => (a._id !== id && a.id !== id));
+    if (current?.category) {
+      const matchCat = list.filter(a => a.category === current.category);
+      if (matchCat.length > 0) list = matchCat;
+    }
+
+    res.status(200).json({
+      success: true,
+      count: list.slice(0, 4).length,
+      recommendations: list.slice(0, 4),
+    });
+  } catch (error) {
+    console.error('Get recommended articles error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch recommendations.',
+    });
+  }
+};
+
 module.exports = {
   createArticle,
   getArticles,
   getArticleById,
+  getRecommendedArticles,
   updateArticle,
   submitArticle,
   approveArticle,

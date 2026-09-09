@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Search, Send, User as UserIcon, MessageSquare, AlertCircle, RefreshCw } from 'lucide-react';
+import { io } from 'socket.io-client';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -16,8 +17,30 @@ const ChatPage = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const messagesEndRef = useRef(null);
+  const socketRef = useRef(null);
 
   const currentUserId = authUser?.id || authUser?._id;
+
+  // Real-time Socket.io Connection
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const socket = io('http://localhost:5000');
+    socketRef.current = socket;
+
+    socket.emit('join_room', currentUserId);
+
+    socket.on('receive_message', (newMsg) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m._id === newMsg._id)) return prev;
+        return [...prev, newMsg];
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [currentUserId]);
 
   // Scroll to bottom of message container
   const scrollToBottom = () => {
@@ -27,6 +50,7 @@ const ChatPage = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
 
   // Fetch users
   useEffect(() => {

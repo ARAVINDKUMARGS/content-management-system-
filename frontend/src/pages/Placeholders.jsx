@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -146,26 +146,32 @@ export const BrowsePage = () => {
   const [loading, setLoading] = React.useState(true);
 
   /*
-   * Get articles from backend
+   * Fetch articles from backend API using search & category query params
    */
   React.useEffect(() => {
     const fetchArticles = async () => {
       try {
+        setLoading(true);
         const token = localStorage.getItem('lumen_token');
 
-        const response = await fetch(
-          'http://localhost:5000/api/articles',
-          {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const queryParams = new URLSearchParams();
+        if (searchQuery.trim()) {
+          queryParams.append('search', searchQuery.trim());
+        }
+        if (selectedCategory && selectedCategory !== 'All Topics') {
+          queryParams.append('category', selectedCategory);
+        }
+
+        const url = `http://localhost:5000/api/articles?${queryParams.toString()}`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         const data = await response.json();
-
-        console.log('Browse articles:', data);
 
         if (data.success) {
           setArticles(data.articles || []);
@@ -177,26 +183,15 @@ export const BrowsePage = () => {
       }
     };
 
-    fetchArticles();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchArticles();
+    }, 300);
 
-  /*
-   * Search + category filtering
-   */
-  const filteredArticles = articles.filter((article) => {
-    const search = searchQuery.toLowerCase().trim();
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedCategory]);
 
-    const matchesSearch =
-      article.title?.toLowerCase().includes(search) ||
-      article.description?.toLowerCase().includes(search) ||
-      article.category?.toLowerCase().includes(search);
+  const filteredArticles = articles;
 
-    const matchesCategory =
-      selectedCategory === 'All Topics' ||
-      article.category === selectedCategory;
-
-    return matchesSearch && matchesCategory;
-  });
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
