@@ -1,19 +1,19 @@
-const express = require("express");
-const Message = require("../models/Message");
-const User = require("../models/User");
+const express = require('express');
+const Message = require('../models/Message');
+const User = require('../models/User');
 
 const router = express.Router();
 
 // Get conversation between two users
-router.get("/:userId", async (req, res) => {
+router.get('/:userId', async (req, res) => {
   try {
-    const currentUserId = req.query.currentUserId;
+    const currentUserId = req.query.currentUserId || req.user?._id || req.user?.id;
     const selectedUserId = req.params.userId;
 
     if (!currentUserId) {
       return res.status(400).json({
         success: false,
-        message: "currentUserId is required",
+        message: 'currentUserId is required',
       });
     }
 
@@ -37,21 +37,22 @@ router.get("/:userId", async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to fetch messages",
+      message: 'Failed to fetch messages',
       error: error.message,
     });
   }
 });
 
 // Send a new message
-router.post("/", async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const { sender, receiver, text } = req.body;
+    const sender = req.body.sender || req.user?._id || req.user?.id;
+    const { receiver, text } = req.body;
 
     if (!sender || !receiver || !text?.trim()) {
       return res.status(400).json({
         success: false,
-        message: "sender, receiver and text are required",
+        message: 'sender, receiver and text are required',
       });
     }
 
@@ -61,17 +62,6 @@ router.post("/", async (req, res) => {
       text: text.trim(),
     });
 
-    // Update receiver/sender preview
-    await User.findByIdAndUpdate(sender, {
-      lastMessage: text.trim(),
-      lastMessageTime: new Date(),
-    });
-
-    await User.findByIdAndUpdate(receiver, {
-      lastMessage: text.trim(),
-      lastMessageTime: new Date(),
-    });
-
     res.status(201).json({
       success: true,
       message,
@@ -79,7 +69,7 @@ router.post("/", async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Failed to send message",
+      message: 'Failed to send message',
       error: error.message,
     });
   }

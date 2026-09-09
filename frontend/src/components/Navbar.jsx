@@ -225,8 +225,12 @@ const Navbar = () => {
     location.pathname.startsWith('/browse');
   const isDiscussionActive =
     location.pathname.startsWith('/discussions');
+  const isChatActive =
+    location.pathname.startsWith('/chat');
   const isWriteActive =
     location.pathname.startsWith('/write');
+  const isQuizBuilderActive =
+    location.pathname.startsWith('/quiz-builder');
   const isAdminActive =
     location.pathname.startsWith('/admin');
   const isProfileActive =
@@ -257,10 +261,24 @@ const Navbar = () => {
       active: isDiscussionActive,
     },
     {
+      to: '/chat',
+      label: 'Chat',
+      icon: MessageSquare,
+      active: isChatActive,
+      show: isAuthenticated,
+    },
+    {
       to: '/write',
       label: 'Write',
       icon: PenLine,
       active: isWriteActive,
+      show: isAuthor || isAdmin,
+    },
+    {
+      to: '/quiz-builder',
+      label: 'Quizzes',
+      icon: BookOpen,
+      active: isQuizBuilderActive,
       show: isAuthor || isAdmin,
     },
     {
@@ -280,6 +298,7 @@ const Navbar = () => {
       show: isAuthenticated,
     },
   ];
+
 
   return (
     <nav className="sticky top-0 z-50 bg-[#FAF7F2]/95 dark:bg-[#121614]/95 backdrop-blur-md border-b border-[#EDE8DF] dark:border-[#2D3732] transition-colors">

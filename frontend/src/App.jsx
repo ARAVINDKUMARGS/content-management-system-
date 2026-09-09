@@ -31,6 +31,8 @@ import WriteArticle from './pages/WriteArticle';
 import ArticleConfirmation from './pages/ArticleConfirmation';
 
 import DiscussionPage from './pages/DiscussionPage';
+import ChatPage from './pages/ChatPage';
+import QuizBuilder from './pages/QuizBuilder';
 
 function App() {
   return (
@@ -67,6 +69,29 @@ function App() {
                 path="/discussions"
                 element={<DiscussionPage />}
               />
+
+              {/* Chat */}
+              <Route
+                path="/chat"
+                element={
+                  <ProtectedRoute>
+                    <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Quiz Builder */}
+              <Route
+                path="/quiz-builder"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['author', 'admin']}>
+                      <QuizBuilder />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
+
 
               {/* Login */}
               <Route
