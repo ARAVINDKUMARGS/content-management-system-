@@ -15,8 +15,9 @@ const { authenticateUser, authorizeRole } = require('../middleware/auth');
 router.get('/profile', authenticateUser, getProfile);
 router.put('/profile', authenticateUser, updateProfile);
 
-// Admin-only User Management Endpoints
-router.get('/', authenticateUser, authorizeRole('admin'), getAllUsers);
+// User directory (for chat and admin management)
+router.get('/', authenticateUser, getAllUsers);
+
 router.post('/', authenticateUser, authorizeRole('admin'), createUserByAdmin);
 router.put('/:id/role', authenticateUser, authorizeRole('admin'), updateUserRole);
 router.delete('/:id', authenticateUser, authorizeRole('admin'), deleteUser);
