@@ -80,6 +80,7 @@ const commentRoutes = require('./routes/commentRoutes');
 
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 // Authentication
 app.use('/api/auth', authRoutes);
@@ -110,6 +111,10 @@ app.use('/api/subscriptions', subscriptionRoutes);
 
 // Messages / Chat
 app.use('/api/messages', messageRoutes);
+
+// Content Reports
+app.use('/api/reports', reportRoutes);
+
 
 
 // ======================================================
