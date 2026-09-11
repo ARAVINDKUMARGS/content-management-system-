@@ -56,43 +56,81 @@ const createArticle = async (req, res) => {
   }
 };
 
+const isMongoConnected = () => {
+  return mongoose.connection && mongoose.connection.readyState === 1;
+};
+
 // Get all articles
 const getArticles = async (req, res) => {
   try {
     const { status, category, search } = req.query;
-
-    const filter = {};
-
     const isAdmin = req.user && req.user.role === 'admin';
+
+    if (isMongoConnected()) {
+      const filter = {};
+
+      if (status) {
+        if (!isAdmin && status !== 'published') {
+          filter.status = 'published';
+        } else {
+          filter.status = status;
+        }
+      } else {
+        if (!isAdmin) {
+          filter.status = 'published';
+        }
+      }
+
+      if (category) {
+        filter.category = category;
+      }
+
+      if (search) {
+        filter.$or = [
+          { title: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+        ];
+      }
+
+      const articles = await Article.find(filter)
+        .populate('author', 'name email role avatar')
+        .sort({ createdAt: -1 });
+
+      return res.status(200).json({
+        success: true,
+        count: articles.length,
+        articles,
+      });
+    }
+
+    // In-memory fallback
+    const articleStore = require('../models/articleStore');
+    let articles = [...(articleStore.inMemoryArticles || [])];
 
     if (status) {
       if (!isAdmin && status !== 'published') {
-        filter.status = 'published';
+        articles = articles.filter((a) => a.status === 'published');
       } else {
-        filter.status = status;
+        articles = articles.filter((a) => a.status === status);
       }
-    } else {
-      if (!isAdmin) {
-        filter.status = 'published';
-      }
+    } else if (!isAdmin) {
+      articles = articles.filter((a) => a.status === 'published');
     }
 
     if (category) {
-      filter.category = category;
+      articles = articles.filter((a) => a.category === category);
     }
 
     if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-      ];
+      const term = search.toLowerCase();
+      articles = articles.filter(
+        (a) =>
+          (a.title && a.title.toLowerCase().includes(term)) ||
+          (a.description && a.description.toLowerCase().includes(term))
+      );
     }
 
-    const articles = await Article.find(filter)
-      .populate('author', 'name email role avatar')
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: articles.length,
       articles,
@@ -110,9 +148,18 @@ const getArticles = async (req, res) => {
 // Get single article
 const getArticleById = async (req, res) => {
   try {
-    const article = await Article.findById(req.params.id)
-      .populate('author', 'name email role avatar bio')
-      .populate('adminNote.reviewedBy', 'name email');
+    let article = null;
+
+    if (isMongoConnected()) {
+      article = await Article.findById(req.params.id)
+        .populate('author', 'name email role avatar bio')
+        .populate('adminNote.reviewedBy', 'name email');
+    } else {
+      const articleStore = require('../models/articleStore');
+      article = (articleStore.inMemoryArticles || []).find(
+        (a) => a._id === req.params.id || a.id === req.params.id
+      );
+    }
 
     if (!article) {
       return res.status(404).json({
@@ -123,7 +170,7 @@ const getArticleById = async (req, res) => {
 
     if (article.status !== 'published') {
       const currentUserId = req.user ? (req.user._id || req.user.id)?.toString() : null;
-      const articleAuthorId = article.author ? (article.author._id || article.author)?.toString() : null;
+      const articleAuthorId = article.author ? (article.author._id || article.author.id || article.author)?.toString() : null;
       const isAuthor = currentUserId && articleAuthorId && currentUserId === articleAuthorId;
       const isAdmin = req.user && req.user.role === 'admin';
 
