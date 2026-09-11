@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const Article = require('../models/Article');
+const User = require('../models/User');
+const { notifyAuthorSubscribers, notifyAdminUsers, createNotification } = require('./notificationController');
 
 const getUserId = (req) => {
   return req.user.id || req.user._id;
@@ -12,7 +14,8 @@ const isArticleOwner = (article, userId) => {
 // Create a new article
 const createArticle = async (req, res) => {
   try {
-    const { title, description, content, category, tags } = req.body;
+    const { title, description, content, category, tags, status } = req.body;
+    const initialStatus = status === 'pending' ? 'pending' : 'draft';
 
     const article = await Article.create({
       title,
@@ -21,11 +24,22 @@ const createArticle = async (req, res) => {
       category,
       tags: Array.isArray(tags) ? tags : [],
       author: req.user._id,
-      status: 'draft',
+      status: initialStatus,
+      submittedAt: initialStatus === 'pending' ? new Date() : null,
     });
 
     const populatedArticle = await Article.findById(article._id)
       .populate('author', 'name email role avatar');
+
+    if (initialStatus === 'pending') {
+      await notifyAdminUsers({
+        sender: req.user._id,
+        title: 'New Article Pending Review',
+        message: `Author ${req.user?.name || 'an author'} submitted "${article.title}" for editorial verification.`,
+        type: 'article_status',
+        link: '/admin',
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -49,8 +63,18 @@ const getArticles = async (req, res) => {
 
     const filter = {};
 
+    const isAdmin = req.user && req.user.role === 'admin';
+
     if (status) {
-      filter.status = status;
+      if (!isAdmin && status !== 'published') {
+        filter.status = 'published';
+      } else {
+        filter.status = status;
+      }
+    } else {
+      if (!isAdmin) {
+        filter.status = 'published';
+      }
     }
 
     if (category) {
@@ -95,6 +119,20 @@ const getArticleById = async (req, res) => {
         success: false,
         message: 'Article not found.',
       });
+    }
+
+    if (article.status !== 'published') {
+      const currentUserId = req.user ? (req.user._id || req.user.id)?.toString() : null;
+      const articleAuthorId = article.author ? (article.author._id || article.author)?.toString() : null;
+      const isAuthor = currentUserId && articleAuthorId && currentUserId === articleAuthorId;
+      const isAdmin = req.user && req.user.role === 'admin';
+
+      if (!isAuthor && !isAdmin) {
+        return res.status(403).json({
+          success: false,
+          message: 'This article is pending editorial review and is not yet published.',
+        });
+      }
     }
 
     res.status(200).json({
@@ -170,6 +208,16 @@ const updateArticle = async (req, res) => {
     const updatedArticle = await Article.findById(article._id)
       .populate('author', 'name email role avatar');
 
+    if (article.status === 'published' && article.author) {
+      await notifyAuthorSubscribers({
+        authorId: article.author,
+        title: `Content Updated: "${article.title}"`,
+        message: `${updatedArticle.author?.name || 'Author'} updated the content in "${article.title}". Read the latest release!`,
+        type: 'subscription',
+        link: `/browse/${article._id}`,
+      });
+    }
+
     res.status(200).json({
       success: true,
       message: 'Article updated successfully.',
@@ -221,6 +269,14 @@ const submitArticle = async (req, res) => {
     article.submittedAt = new Date();
 
     await article.save();
+
+    await notifyAdminUsers({
+      sender: req.user._id,
+      title: 'New Article Pending Review',
+      message: `Author ${req.user?.name || 'an author'} submitted "${article.title}" for editorial verification.`,
+      type: 'article_status',
+      link: '/admin',
+    });
 
     res.status(200).json({
       success: true,
@@ -704,6 +760,37 @@ const reviewArticle = async (req, res) => {
       'name avatar bio'
     );
 
+    if (status === 'published' && article.author) {
+      const authorUser = await User.findById(article.author);
+      const authorName = authorUser ? authorUser.name : 'Subscribed Author';
+
+      await createNotification({
+        user: article.author,
+        sender: req.user._id,
+        title: 'Article Approved & Published',
+        message: `Your article "${article.title}" has been approved by admin and is live on Lumen!`,
+        type: 'article_status',
+        link: `/browse/${article._id}`,
+      });
+
+      await notifyAuthorSubscribers({
+        authorId: article.author,
+        title: `New Article by ${authorName}`,
+        message: `${authorName} published a new article: "${article.title}". Read it now on Lumen!`,
+        type: 'subscription',
+        link: `/browse/${article._id}`,
+      });
+    } else if (['changes_requested', 'rejected'].includes(status) && article.author) {
+      await createNotification({
+        user: article.author,
+        sender: req.user._id,
+        title: status === 'rejected' ? 'Article Rejected' : 'Changes Requested',
+        message: `Your article "${article.title}" status updated to ${status}. Feedback: "${reviewFeedback ? reviewFeedback.trim() : ''}"`,
+        type: status === 'rejected' ? 'rejection' : 'change_request',
+        link: `/write/${article._id}`,
+      });
+    }
+
     return res.status(200).json({
       success: true,
       message: `Article status changed to '${status}'.`,
@@ -758,6 +845,7 @@ const getRecommendedArticles = async (req, res) => {
 
       const recommendations = await Article.find({
         _id: { $ne: id },
+        status: 'published',
         $or: [
           { category: currentArticle.category },
           { tags: { $in: currentArticle.tags || [] } }
@@ -769,7 +857,8 @@ const getRecommendedArticles = async (req, res) => {
       if (recommendations.length < 4) {
         const existingIds = recommendations.map(r => r._id).concat(id);
         const fill = await Article.find({
-          _id: { $nin: existingIds }
+          _id: { $nin: existingIds },
+          status: 'published',
         })
           .populate('author', 'name email role avatar')
           .limit(4 - recommendations.length);
@@ -785,8 +874,8 @@ const getRecommendedArticles = async (req, res) => {
     }
 
     const articleStore = require('../models/articleStore');
-    const all = articleStore.inMemoryArticles || [];
-    const current = all.find(a => a._id === id || a.id === id);
+    const all = (articleStore.inMemoryArticles || []).filter(a => a.status === 'published');
+    const current = (articleStore.inMemoryArticles || []).find(a => a._id === id || a.id === id);
     let list = all.filter(a => (a._id !== id && a.id !== id));
     if (current?.category) {
       const matchCat = list.filter(a => a.category === current.category);

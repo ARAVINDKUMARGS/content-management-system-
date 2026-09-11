@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   MessageSquare,
   Search,
@@ -8,10 +8,11 @@ import {
   X,
   AlertCircle,
 } from 'lucide-react';
+import { commentAPI } from '../../services/api';
 
 const initialComments = [
   {
-    id: 1,
+    id: '1',
     comment:
       'This was a really insightful article. The explanation was simple and easy to understand.',
     user: 'Aarav Mehta',
@@ -20,7 +21,7 @@ const initialComments = [
     status: 'visible',
   },
   {
-    id: 2,
+    id: '2',
     comment:
       'I completely disagree with this point. There are other perspectives that should be considered.',
     user: 'Priya Sharma',
@@ -29,7 +30,7 @@ const initialComments = [
     status: 'visible',
   },
   {
-    id: 3,
+    id: '3',
     comment:
       'This comment contains content that should be reviewed by the administrator.',
     user: 'Rohan Patil',
@@ -37,33 +38,48 @@ const initialComments = [
     date: 'Sep 03, 2026',
     status: 'hidden',
   },
-  {
-    id: 4,
-    comment:
-      'Very useful information. Looking forward to reading more articles like this.',
-    user: 'Neha Joshi',
-    article: 'Technology and Society',
-    date: 'Sep 02, 2026',
-    status: 'visible',
-  },
-  {
-    id: 5,
-    comment:
-      'I found this article helpful and the examples made the topic much clearer.',
-    user: 'Vikram Singh',
-    article: 'Why People Change Their Minds',
-    date: 'Sep 01, 2026',
-    status: 'visible',
-  },
 ];
 
 const CommentsManagement = () => {
   const [comments, setComments] = useState(initialComments);
-
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-
   const [selectedComment, setSelectedComment] = useState(null);
+
+  useEffect(() => {
+    fetchComments();
+  }, []);
+
+  const fetchComments = async () => {
+    setLoading(true);
+    try {
+      const response = await commentAPI.getAllCommentsForAdmin();
+      if (response.data?.success && Array.isArray(response.data.comments)) {
+        const mapped = response.data.comments.map((c) => ({
+          id: c.id || c._id,
+          comment: c.content || c.comment || '',
+          user: c.author?.name || 'Anonymous',
+          article: c.targetId || 'Article',
+          date: c.createdAt
+            ? new Date(c.createdAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric',
+              })
+            : 'Recent',
+          status: c.status || 'visible',
+        }));
+        if (mapped.length > 0) {
+          setComments(mapped);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch admin comments:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredComments = useMemo(() => {
     const searchTerm = search.toLowerCase().trim();
@@ -99,12 +115,18 @@ const CommentsManagement = () => {
     );
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const confirmed = window.confirm(
       'Are you sure you want to delete this comment?'
     );
 
     if (!confirmed) return;
+
+    try {
+      await commentAPI.deleteComment(id);
+    } catch (err) {
+      console.warn('API delete comment notice:', err.message);
+    }
 
     setComments((currentComments) =>
       currentComments.filter((comment) => comment.id !== id)
@@ -398,26 +420,7 @@ const CommentsManagement = () => {
 
       </div>
 
-      {/* Temporary API Notice */}
-      <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
 
-        <AlertCircle className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
-
-        <div>
-
-          <p className="text-xs font-semibold text-amber-900">
-            Temporary demonstration data
-          </p>
-
-          <p className="text-[11px] text-amber-800 mt-1">
-            Comments are currently displayed using temporary data.
-            This will be replaced with the comments API once the
-            backend is available.
-          </p>
-
-        </div>
-
-      </div>
 
       {/* View Comment Modal */}
       {selectedComment && (

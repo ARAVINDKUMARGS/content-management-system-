@@ -262,6 +262,27 @@ const populateAuthor = async (authorIdOrDoc) => {
 const commentStore = {
   isDBConnected,
 
+  async getAllComments() {
+    if (isDBConnected()) {
+      try {
+        const comments = await Comment.find({})
+          .populate('author', 'name email role avatar bio')
+          .sort({ createdAt: -1 });
+        return comments;
+      } catch (err) {
+        console.warn('[DB Fallback] Comment getAllComments failed, using in-memory store:', err.message);
+      }
+    }
+
+    await initMemoryComments();
+    return Promise.all(
+      inMemoryComments.map(async (c) => ({
+        ...c,
+        author: await populateAuthor(c.author),
+      }))
+    );
+  },
+
   async findById(id) {
     if (isDBConnected()) {
       try {

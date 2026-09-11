@@ -26,6 +26,7 @@ import {
   LayoutDashboard,
   AlertCircle,
   CheckCircle2,
+  Check,
   Clock3,
   XCircle,
 } from 'lucide-react';
@@ -345,6 +346,33 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
   }
 };
 
+  const handleQuickApprove = async (articleId) => {
+    setReviewingArticle(true);
+    setError('');
+    try {
+      const response = await articleAPI.reviewArticle(articleId, {
+        status: 'published',
+      });
+
+      if (response.data?.success) {
+        setSuccessMsg(
+          'Article approved and published successfully. Author and subscribers notified!'
+        );
+        await fetchArticles();
+      } else {
+        setError(
+          response.data?.message || 'Failed to approve article.'
+        );
+      }
+    } catch (err) {
+      setError(
+        err.response?.data?.message || 'Failed to approve article.'
+      );
+    } finally {
+      setReviewingArticle(false);
+    }
+  };
+
   // ==========================================
   // FILTER USERS
   // ==========================================
@@ -386,7 +414,9 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
 
       const matchesStatus =
         articleStatusFilter === 'all' ||
-        article.status === articleStatusFilter;
+        article.status === articleStatusFilter ||
+        (articleStatusFilter === 'pending_review' &&
+          (article.status === 'pending' || article.status === 'pending_review'));
 
       return matchesSearch && matchesStatus;
     });
@@ -401,32 +431,23 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
   // ==========================================
 
   const filteredQuizzes = useMemo(() => {
-  return quizzes.filter((quiz) => {
-    // Never show draft quizzes to admin
-    if (quiz.status === 'draft') {
-      return false;
-    }
+    return quizzes.filter((quiz) => {
+      const title = quiz.title?.toLowerCase() || '';
 
-    const title = quiz.title?.toLowerCase() || '';
+      const search = quizSearch.toLowerCase();
 
-    const search = quizSearch.toLowerCase();
+      const matchesSearch = title.includes(search);
 
-    const matchesSearch = title.includes(search);
+      const matchesStatus =
+        quizStatusFilter === 'all' ||
+        quiz.status === quizStatusFilter;
 
-    const matchesStatus =
-      quizStatusFilter === 'all' ||
-      quiz.status === quizStatusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
-}, [
-  quizzes,
-  quizSearch,
-  quizStatusFilter,
-]);
+      return matchesSearch && matchesStatus;
+    });
+  }, [quizzes, quizSearch, quizStatusFilter]);
 
   // ==========================================
-  // STATISTICS
+  // METRICS
   // ==========================================
 
   const totalUsers = users.length;
@@ -448,7 +469,7 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
   ).length;
 
   const pendingArticles = articles.filter(
-    (a) => a.status === 'pending_review'
+    (a) => a.status === 'pending' || a.status === 'pending_review'
   ).length;
 
   const draftArticles = articles.filter(
@@ -1084,20 +1105,31 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
 
                     <td className="py-3.5 text-right">
 
-                      {article.status === 'pending_review' ? (
-                        <button
-                          onClick={() => {
-                            setViewItem(article);
-                            setViewType('article');
-                            setReviewFeedback('');
-                            setError('');
-                          }}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1A382B] hover:bg-[#11261D] text-white text-[10px] font-bold transition"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          Review
-                        </button>
-                        ) : (
+                      {article.status === 'pending' || article.status === 'pending_review' ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleQuickApprove(article._id)}
+                            disabled={reviewingArticle}
+                            title="Approve & Publish Article"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[10px] font-bold transition shadow-xs disabled:opacity-50"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => {
+                              setViewItem(article);
+                              setViewType('article');
+                              setReviewFeedback('');
+                              setError('');
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-[10px] font-bold transition"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            Review
+                          </button>
+                        </div>
+                      ) : (
                         <button
                           onClick={() => {
                             setViewItem(article);
@@ -1724,7 +1756,7 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
                     </div>
                   )}
 
-                  {viewItem.status === 'pending_review' && (
+                  {(viewItem.status === 'pending' || viewItem.status === 'pending_review') && (
                     <div className="border-t border-[#EDE8DF] pt-5 mt-5">
                       <h4 className="font-serif font-bold text-stone-900 mb-2">
                         Admin Review

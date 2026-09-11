@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 const Article = require('../models/Article');
 const Quiz = require('../models/Quiz');
+const User = require('../models/User');
 const articleStore = require('../models/articleStore');
-const { createNotification } = require('./notificationController');
+const { createNotification, notifyAuthorSubscribers } = require('./notificationController');
 
 // =====================================================
 // GET PENDING ARTICLES
@@ -138,12 +139,23 @@ const approveArticle = async (req, res) => {
         await article.save();
 
         if (article.author) {
+          const authorUser = await User.findById(article.author);
+          const authorName = authorUser ? authorUser.name : 'Subscribed Author';
+
           await createNotification({
             user: article.author,
             sender: req.user._id,
             title: 'Article Published',
             message: `Your article "${article.title}" has been approved and is live on Lumen!`,
             type: 'article_status',
+            link: `/browse/${article._id}`,
+          });
+
+          await notifyAuthorSubscribers({
+            authorId: article.author,
+            title: `New Article by ${authorName}`,
+            message: `${authorName} published a new article: "${article.title}". Read it now on Lumen!`,
+            type: 'subscription',
             link: `/browse/${article._id}`,
           });
         }

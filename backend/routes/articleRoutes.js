@@ -24,6 +24,7 @@ const {
 const {
   authenticateUser,
   authorizeRole,
+  optionalAuth,
 } = require('../middleware/auth');
 
 const router = express.Router();
@@ -33,7 +34,7 @@ const router = express.Router();
 // =====================================================
 
 // Get all articles
-router.get('/', getArticles);
+router.get('/', optionalAuth, getArticles);
 
 // Get published articles by a specific author
 router.get(
@@ -155,9 +156,9 @@ router.patch(
 // =====================================================
 
 // Recommended articles
-router.get('/:id/recommendations', getRecommendedArticles);
+router.get('/:id/recommendations', optionalAuth, getRecommendedArticles);
 
-router.get('/:id', getArticleById);
+router.get('/:id', optionalAuth, getArticleById);
 
 
 module.exports = router;

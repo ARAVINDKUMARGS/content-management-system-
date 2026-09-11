@@ -64,8 +64,8 @@ const optionalAuth = async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer ')
   ) {
     const token = req.headers.authorization.split(' ')[1];
-    const jwtSecret = process.env.JWT_SECRET;
-    if (token && jwtSecret) {
+    const jwtSecret = process.env.JWT_SECRET || 'lumen_super_secret_jwt_key_2026_cms_platform';
+    if (token) {
       try {
         const decoded = jwt.verify(token, jwtSecret);
         req.user = await userStore.findById(decoded.id);

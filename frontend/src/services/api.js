@@ -9,13 +9,7 @@ const API = axios.create({
   timeout: 10000,
 });
 
-const QUIZ_API = axios.create({
-  baseURL: import.meta.env.VITE_QUIZ_API_URL || 'http://localhost:5001/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 10000,
-});
+const QUIZ_API = API;
 
 // Request Interceptor: Attach JWT Bearer token if available
 API.interceptors.request.use(
@@ -265,13 +259,7 @@ export const commentAPI = {
   deleteComment: (id) => API.delete(`/comments/${id}`),
   toggleReaction: (id, type = 'like') => API.post(`/comments/${id}/react`, { type }),
   getRecentDiscussions: (limit = 8) => API.get('/comments/recent', { params: { limit } }),
-
-  // Admin
-  reviewArticle: (id, data) =>
-    API.patch(`/articles/${id}/review`, data),
-
-  getAllArticlesForAdmin: () =>
-    API.get('/articles/admin/all'),
+  getAllCommentsForAdmin: () => API.get('/comments/admin/all'),
 };
 // Author Subscription API
 // ======================================================

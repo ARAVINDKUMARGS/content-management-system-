@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Subscription = require('../models/Subscription');
 const User = require('../models/User');
+const { createNotification } = require('./notificationController');
 
 const isMongoConnected = () => {
   return (
@@ -98,6 +99,15 @@ const subscribeToAuthor = async (req, res) => {
         'author',
         'name email role bio avatar'
       );
+
+    await createNotification({
+      user: authorId,
+      sender: subscriberId,
+      title: 'New Subscriber!',
+      message: `${req.user?.name || 'A reader'} subscribed to your author profile.`,
+      type: 'subscription',
+      link: '/profile',
+    });
 
     return res.status(201).json({
       success: true,

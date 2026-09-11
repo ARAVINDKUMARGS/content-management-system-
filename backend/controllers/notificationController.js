@@ -1,4 +1,6 @@
 const Notification = require('../models/Notification');
+const Subscription = require('../models/Subscription');
+const User = require('../models/User');
 const mongoose = require('mongoose');
 
 // Seed notifications fallback matching Figma Page 5
@@ -80,6 +82,52 @@ const createNotification = async ({ user, sender = null, title, message, type = 
   }
 };
 
+// Helper to notify all subscribers of an author
+const notifyAuthorSubscribers = async ({ authorId, title, message, type = 'subscription', link = '' }) => {
+  try {
+    if (mongoose.connection && mongoose.connection.readyState === 1 && authorId) {
+      const subscriptions = await Subscription.find({ author: authorId });
+      if (subscriptions && subscriptions.length > 0) {
+        const notifDocs = subscriptions.map((sub) => ({
+          user: sub.subscriber,
+          sender: authorId,
+          title,
+          message,
+          type,
+          link,
+          isRead: false,
+        }));
+        await Notification.insertMany(notifDocs);
+      }
+    }
+  } catch (error) {
+    console.error('Notify Author Subscribers Error:', error.message);
+  }
+};
+
+// Helper to notify all admin users
+const notifyAdminUsers = async ({ sender = null, title, message, type = 'system', link = '/admin' }) => {
+  try {
+    if (mongoose.connection && mongoose.connection.readyState === 1) {
+      const admins = await User.find({ role: 'admin' });
+      if (admins && admins.length > 0) {
+        const notifDocs = admins.map((admin) => ({
+          user: admin._id,
+          sender,
+          title,
+          message,
+          type,
+          link,
+          isRead: false,
+        }));
+        await Notification.insertMany(notifDocs);
+      }
+    }
+  } catch (error) {
+    console.error('Notify Admin Users Error:', error.message);
+  }
+};
+
 // Get notifications for logged-in user
 const getUserNotifications = async (req, res) => {
   try {
@@ -117,7 +165,7 @@ const getUserNotifications = async (req, res) => {
 const markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-    if (mongoose.connection && mongoose.connection.readyState === 1) {
+    if (mongoose.connection && mongoose.connection.readyState === 1 && mongoose.Types.ObjectId.isValid(id)) {
       const notification = await Notification.findOne({ _id: id, user: req.user._id });
       if (notification) {
         notification.isRead = true;
@@ -166,6 +214,8 @@ const markAllAsRead = async (req, res) => {
 
 module.exports = {
   createNotification,
+  notifyAuthorSubscribers,
+  notifyAdminUsers,
   getUserNotifications,
   markAsRead,
   markAllAsRead,

@@ -24,7 +24,7 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['article_status', 'quiz_result', 'system'],
+      enum: ['article_status', 'quiz_result', 'system', 'subscription', 'like', 'comment', 'rejection', 'change_request'],
       default: 'system',
     },
     link: {

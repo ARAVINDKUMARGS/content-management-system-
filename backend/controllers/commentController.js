@@ -299,6 +299,29 @@ const getRecentDiscussions = async (req, res) => {
     });
   }
 };
+/**
+ * @desc    Get all comments for admin review
+ * @route   GET /api/comments/admin/all
+ * @access  Private (Admin)
+ */
+const getAllComments = async (req, res) => {
+  try {
+    const rawComments = await commentStore.getAllComments();
+    const formatted = rawComments.map((c) => formatCommentWithStats(c, req.user?.id));
+
+    return res.status(200).json({
+      success: true,
+      count: formatted.length,
+      comments: formatted,
+    });
+  } catch (error) {
+    console.error('[Comment getAllComments Error]:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error retrieving all comments.',
+    });
+  }
+};
 
 module.exports = {
   getCommentsByTarget,
@@ -307,4 +330,5 @@ module.exports = {
   deleteComment,
   toggleReaction,
   getRecentDiscussions,
+  getAllComments,
 };

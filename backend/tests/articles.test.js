@@ -25,4 +25,11 @@ describe('Articles API Tests', () => {
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.recommendations)).toBe(true);
   });
+
+  it('GET /api/articles - public requests should not include non-published articles', async () => {
+    const res = await request(app).get('/api/articles');
+    expect(res.statusCode).toBe(200);
+    const nonPublished = res.body.articles.filter(a => a.status !== 'published');
+    expect(nonPublished.length).toBe(0);
+  });
 });

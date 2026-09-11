@@ -10,6 +10,7 @@ const User = require('./models/User');
 const Article = require('./models/Article');
 const Quiz = require('./models/Quiz');
 const Notification = require('./models/Notification');
+const Comment = require('./models/Comment');
 const { seededArticles } = require('./models/articleStore');
 
 const seedFullDatabase = async () => {
@@ -30,6 +31,7 @@ const seedFullDatabase = async () => {
       Article.deleteMany({}),
       Quiz.deleteMany({}),
       Notification.deleteMany({}),
+      Comment.deleteMany({}),
     ]);
 
     const salt = await bcrypt.genSalt(10);
@@ -207,6 +209,181 @@ const seedFullDatabase = async () => {
     ]);
 
     console.log(`[Seed Script] Created ${notifications.length} Notifications.`);
+
+    // 5. Seed Comments for Articles & Discussions
+    const parentComment1 = new mongoose.Types.ObjectId('66c9f2a00000000000000001');
+    const parentComment4 = new mongoose.Types.ObjectId('66c9f2a00000000000000004');
+    const parentComment6 = new mongoose.Types.ObjectId('66c9f2a00000000000000006');
+    const parentComment8 = new mongoose.Types.ObjectId('66c9f2a00000000000000008');
+    const parentComment10 = new mongoose.Types.ObjectId('66c9f2a00000000000000010');
+    const parentComment12 = new mongoose.Types.ObjectId('66c9f2a00000000000000012');
+
+    const seededComments = await Comment.insertMany([
+      // CRISPR Article Comments (targetId: crispr-future-medicine & crisprArticle._id)
+      {
+        _id: parentComment1,
+        content: 'Fascinating analysis of gene-editing therapies! The distinction between somatic and germline modifications was explained with exceptional clarity.',
+        author: reader._id,
+        targetId: 'crispr-future-medicine',
+        targetType: 'article',
+        parentId: null,
+        reactions: [
+          { user: priya._id, type: 'like' },
+          { user: admin._id, type: 'insightful' },
+        ],
+      },
+      {
+        content: 'Thank you Lena! In our next investigative piece, we will explore the epigenetic delivery vectors currently in clinical phase II trials.',
+        author: priya._id,
+        targetId: 'crispr-future-medicine',
+        targetType: 'article',
+        parentId: parentComment1,
+        reactions: [{ user: reader._id, type: 'heart' }],
+      },
+      {
+        content: 'From an editorial standpoint, this is one of our highest-rated science deep dives this month. Great discussion in the comments!',
+        author: admin._id,
+        targetId: 'crispr-future-medicine',
+        targetType: 'article',
+        parentId: null,
+        reactions: [
+          { user: priya._id, type: 'like' },
+          { user: reader._id, type: 'applause' },
+        ],
+      },
+      {
+        content: 'Fascinating analysis of gene-editing therapies! The distinction between somatic and germline modifications was explained with exceptional clarity.',
+        author: reader._id,
+        targetId: crisprArticle._id.toString(),
+        targetType: 'article',
+        parentId: null,
+        reactions: [
+          { user: priya._id, type: 'like' },
+          { user: admin._id, type: 'insightful' },
+        ],
+      },
+
+      // Technology & AI (targetId: ai-reasoning-frontiers & internetArticle._id)
+      {
+        _id: parentComment4,
+        content: 'The detail about typing "LO" before the UCLA SDS Sigma 7 crashed is legendary. Such a humble beginning for global packet networking.',
+        author: priya._id,
+        targetId: 'ai-reasoning-frontiers',
+        targetType: 'article',
+        parentId: null,
+        reactions: [
+          { user: thomas._id, type: 'like' },
+          { user: reader._id, type: 'insightful' },
+        ],
+      },
+      {
+        content: 'Indeed! Charley Kline and Bill Duvall never suspected that two typed characters would spark the modern telecommunications era.',
+        author: thomas._id,
+        targetId: 'ai-reasoning-frontiers',
+        targetType: 'article',
+        parentId: parentComment4,
+        reactions: [{ user: admin._id, type: 'like' }],
+      },
+      {
+        content: 'The detail about typing "LO" before the UCLA SDS Sigma 7 crashed is legendary. Such a humble beginning for global packet networking.',
+        author: priya._id,
+        targetId: internetArticle._id.toString(),
+        targetType: 'article',
+        parentId: null,
+        reactions: [{ user: thomas._id, type: 'like' }],
+      },
+
+      // Climate Resilience (targetId: climate-resilience-2030)
+      {
+        _id: parentComment6,
+        content: 'Decentralized rainwater catchment and permeable pavement systems could reduce municipal runoff by up to 60% in high-density urban areas.',
+        author: reader._id,
+        targetId: 'climate-resilience-2030',
+        targetType: 'article',
+        parentId: null,
+        reactions: [
+          { user: thomas._id, type: 'like' },
+          { user: admin._id, type: 'insightful' },
+        ],
+      },
+      {
+        content: 'Excellent observation. Urban sponge-city initiatives in East Asia have demonstrated remarkable resilience during recent monsoon seasons.',
+        author: thomas._id,
+        targetId: 'climate-resilience-2030',
+        targetType: 'article',
+        parentId: parentComment6,
+        reactions: [{ user: reader._id, type: 'heart' }],
+      },
+
+      // Ancient Manuscripts (targetId: ancient-manuscripts-decoded)
+      {
+        _id: parentComment8,
+        content: 'Using 3D X-ray tomography and computer vision to read carbonized papyri without physically unrolling them is truly science-fiction turned reality.',
+        author: thomas._id,
+        targetId: 'ancient-manuscripts-decoded',
+        targetType: 'article',
+        parentId: null,
+        reactions: [
+          { user: priya._id, type: 'like' },
+          { user: reader._id, type: 'insightful' },
+        ],
+      },
+      {
+        content: 'The Vesuvius Challenge demonstrated the power of open-source science and machine learning competitions in humanitarian research.',
+        author: reader._id,
+        targetId: 'ancient-manuscripts-decoded',
+        targetType: 'article',
+        parentId: parentComment8,
+        reactions: [{ user: admin._id, type: 'like' }],
+      },
+
+      // Longevity (targetId: longevity-cellular-repair)
+      {
+        _id: parentComment10,
+        content: 'Targeting senescent cells with senolytic compounds appears to be one of the most promising therapeutic avenues for osteoarthritis.',
+        author: priya._id,
+        targetId: 'longevity-cellular-repair',
+        targetType: 'article',
+        parentId: null,
+        reactions: [
+          { user: reader._id, type: 'like' },
+          { user: admin._id, type: 'insightful' },
+        ],
+      },
+      {
+        content: 'Are there any dietary or lifestyle protocols that currently mimic these pathway modulations?',
+        author: reader._id,
+        targetId: 'longevity-cellular-repair',
+        targetType: 'article',
+        parentId: parentComment10,
+        reactions: [{ user: priya._id, type: 'heart' }],
+      },
+
+      // Editorial Governance (targetId: editorial-moderation-standards)
+      {
+        _id: parentComment12,
+        content: 'Editorial transparency is the bedrock of trusted journalism. Clear reviewer rubrics and community reporting tools ensure high quality discourse.',
+        author: admin._id,
+        targetId: 'editorial-moderation-standards',
+        targetType: 'discussion',
+        parentId: null,
+        reactions: [
+          { user: priya._id, type: 'like' },
+          { user: thomas._id, type: 'like' },
+          { user: reader._id, type: 'applause' },
+        ],
+      },
+      {
+        content: 'As authors, having clear editorial feedback before publishing has drastically improved our investigative essays.',
+        author: thomas._id,
+        targetId: 'editorial-moderation-standards',
+        targetType: 'discussion',
+        parentId: parentComment12,
+        reactions: [{ user: admin._id, type: 'heart' }],
+      },
+    ]);
+
+    console.log(`[Seed Script] Created ${seededComments.length} Comments.`);
 
     console.log('\n======================================================');
     console.log('  🌿 Full MongoDB Atlas Database Seed Successful!');
