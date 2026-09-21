@@ -77,10 +77,12 @@ const quizRoutes = require('./routes/quizRoutes');
 const quizAttemptRoutes = require('./routes/quizAttemptRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const commentRoutes = require('./routes/commentRoutes');
-
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+
+// Spam & Abuse Detection
+const spamAbuseRoutes = require('./routes/spamAbuseRouters');
 
 // Authentication
 app.use('/api/auth', authRoutes);
@@ -115,7 +117,8 @@ app.use('/api/messages', messageRoutes);
 // Content Reports
 app.use('/api/reports', reportRoutes);
 
-
+// Spam & Abuse Detection
+app.use('/api/spam-abuse', spamAbuseRoutes);
 
 // ======================================================
 // Root route
@@ -161,6 +164,10 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ======================================================
+// Socket.io
+// ======================================================
+
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -181,7 +188,9 @@ io.on('connection', (socket) => {
   socket.on('join_room', (userId) => {
     if (userId) {
       socket.join(userId.toString());
-      console.log(`[Lumen Socket.io] Socket ${socket.id} joined room ${userId}`);
+      console.log(
+        `[Lumen Socket.io] Socket ${socket.id} joined room ${userId}`
+      );
     }
   });
 
@@ -192,7 +201,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`[Lumen Socket.io] Client disconnected: ${socket.id}`);
+    console.log(
+      `[Lumen Socket.io] Client disconnected: ${socket.id}`
+    );
   });
 });
 
@@ -216,4 +227,4 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-module.exports = app;
+module.exports = app;
