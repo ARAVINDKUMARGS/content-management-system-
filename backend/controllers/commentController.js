@@ -1,4 +1,5 @@
 const commentStore = require('../models/commentStore');
+const trustService = require('../services/trustService');
 
 /**
  * Helper to build threaded comment tree and compute reaction stats
@@ -225,6 +226,20 @@ const deleteComment = async (req, res) => {
 
     await commentStore.deleteComment(commentId);
 
+    // Phase 3: Penalty for moderated deletion (-5) if removed by an admin (and not the author themselves)
+    if (isAdmin && !isOwner && authorId) {
+      try {
+        await trustService.handleCommentModerated(
+          commentId,
+          authorId,
+          'Comment removed by administrator moderation for policy violation',
+          userId
+        );
+      } catch (trustErr) {
+        console.warn('[Trust] Failed to record penalty on comment moderation:', trustErr.message);
+      }
+    }
+
     return res.status(200).json({
       success: true,
       message: isAdmin && !isOwner ? 'Comment removed by administrator moderation.' : 'Comment deleted successfully.',
@@ -255,6 +270,19 @@ const toggleReaction = async (req, res) => {
         success: false,
         message: 'Comment not found.',
       });
+    }
+
+    // Phase 3: Award +2 Trust Score to comment author when another user adds a positive reaction
+    if (result.userReacted) {
+      const commentDoc = result.comment;
+      const authorId = (commentDoc.author?.id || commentDoc.author?._id || commentDoc.author)?.toString();
+      if (authorId && authorId !== userId) {
+        try {
+          await trustService.handleHelpfulReaction(`reaction_${commentId}_${userId}`, authorId);
+        } catch (trustErr) {
+          console.warn('[Trust] Failed to record reaction reward:', trustErr.message);
+        }
+      }
     }
 
     const formatted = formatCommentWithStats(result.comment, userId);
