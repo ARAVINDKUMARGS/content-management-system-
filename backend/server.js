@@ -217,3 +217,5 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 module.exports = app;
+const appealRoutes = require('./routes/appealRoutes');
+app.use('/api/appeals', appealRoutes);
