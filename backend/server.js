@@ -8,7 +8,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('./config/db');
-
+const contentQualityRoutes = require('./routes/contentQualityRoutes');
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '.env') });
 dotenv.config();
@@ -50,7 +50,7 @@ app.use(
     credentials: true,
   })
 );
-
+app.use('/api/content-quality', contentQualityRoutes);
 // Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -216,4 +216,4 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-module.exports = app;
+module.exports = app;
