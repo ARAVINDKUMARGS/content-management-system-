@@ -6,7 +6,8 @@ const API = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  // 30s for normal requests; bulk AI scans override this per-call
+  timeout: 30000,
 });
 
 const QUIZ_API = API;
@@ -303,4 +304,16 @@ export const QuizAPI = {
 
 };
 
+// AI Content Moderation API
+export const moderationAPI = {
+  getStats: () => API.get('/moderation/stats'),
+  getContent: (params) => API.get('/moderation/content', { params }),
+  // Single rescan — give 60s (Gemini can be slow)
+  rescanContent: (type, id) => API.post(`/moderation/rescan/${type}/${id}`, {}, { timeout: 60000 }),
+  // Bulk scans: 3 min timeout — scanning 26+ items takes 60-90s with delays
+  scanAll: () => API.post('/moderation/scan-all', {}, { timeout: 180000 }),
+  rescanAll: () => API.post('/moderation/rescan-all', {}, { timeout: 180000 }),
+};
+
 export default API;
+
