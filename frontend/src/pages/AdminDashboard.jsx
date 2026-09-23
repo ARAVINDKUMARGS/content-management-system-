@@ -6,6 +6,7 @@ import { userAPI, articleAPI, QuizAPI } from '../services/api';
 import CommentsManagement from '../components/admin/CommentsManagement';
 import ReportsManagement from '../components/admin/ReportsManagement';
 import SubscriptionsManagement from '../components/admin/SubscriptionsManagement';
+import AIModerationDashboard from '../components/admin/AIModerationDashboard';
 
 import {
   ShieldCheck,
@@ -29,6 +30,7 @@ import {
   Check,
   Clock3,
   XCircle,
+  Bot,
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -583,6 +585,11 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
       id: 'subscriptions',
       label: 'Subscriptions',
       icon: CreditCard,
+    },
+    {
+      id: 'moderation',
+      label: 'AI Moderation',
+      icon: Bot,
     },
   ];
 
@@ -1368,6 +1375,9 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
 
       case 'subscriptions':
         return <SubscriptionsManagement />;
+
+      case 'moderation':
+        return <AIModerationDashboard />;
 
       default:
         return renderOverview();

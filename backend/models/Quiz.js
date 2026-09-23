@@ -64,6 +64,29 @@ const quizSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    aiModeration: {
+      score: {
+        type: Number,
+        default: null,
+      },
+      level: {
+        type: String,
+        enum: ['low', 'moderate', 'high', 'pending', null],
+        default: null,
+      },
+      flags: {
+        type: [String],
+        default: [],
+      },
+      reason: {
+        type: String,
+        default: '',
+      },
+      checkedAt: {
+        type: Date,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,
