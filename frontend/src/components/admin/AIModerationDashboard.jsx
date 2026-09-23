@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 import {
   ShieldCheck,
   AlertTriangle,
@@ -132,8 +134,14 @@ const initialActivity = [
 ];
 
 const AIModerationDashboard = () => {
+  const { token, isAdmin } = useAuth();
   const [items, setItems] = useState(initialModerationItems);
   const [activities, setActivities] = useState(initialActivity);
+
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(true);
+  const [reportsError, setReportsError] = useState('');
+  const [reportFilter, setReportFilter] = useState('all');
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -144,6 +152,124 @@ const AIModerationDashboard = () => {
 
   const [successMessage, setSuccessMessage] = useState('');
   const [showReportsOnly, setShowReportsOnly] = useState(false);
+
+  const fetchReports = async () => {
+    try {
+      setReportsLoading(true);
+      setReportsError('');
+
+      if (!token) {
+        setReportsError('Authentication token not found.');
+        return;
+      }
+
+      const response = await axios.get(
+        'http://localhost:5000/api/reports',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.data?.success) {
+        setReports(response.data.reports || []);
+      } else {
+        setReportsError(
+          response.data?.message || 'Failed to load reports.'
+        );
+      }
+    } catch (error) {
+      console.error('Fetch reports error:', error);
+      setReportsError(
+        error.response?.data?.message ||
+          'Failed to load reports.'
+      );
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token && isAdmin) {
+      fetchReports();
+    }
+  }, [token, isAdmin]);
+
+const updateReportStatus = async (reportId, status) => {
+  try {
+    setReportsError('');
+
+    if (!token) {
+      setReportsError('Authentication token not found.');
+      return;
+    }
+
+    const response = await axios.patch(
+      `http://localhost:5000/api/reports/${reportId}/status`,
+      {
+        status,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.data?.success) {
+      setReports((prev) =>
+        prev.map((report) =>
+          report._id === reportId
+            ? {
+                ...report,
+                status,
+              }
+            : report
+        )
+      );
+
+      setSuccessMessage(
+        status === 'resolved'
+          ? 'Report resolved successfully.'
+          : 'Report dismissed successfully.'
+      );
+
+      setActivities((prev) => [
+        {
+          id: Date.now(),
+          text:
+            status === 'resolved'
+              ? 'Report resolved'
+              : 'Report dismissed',
+          user:
+            response.data.report?.reportedBy ||
+            'Admin',
+          time: 'Just now',
+          type:
+            status === 'resolved'
+              ? 'approved'
+              : 'report',
+        },
+        ...prev,
+      ]);
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    }
+  } catch (error) {
+    console.error(
+      'Update report status error:',
+      error
+    );
+
+    setReportsError(
+      error.response?.data?.message ||
+        'Failed to update report status.'
+    );
+  }
+};
 
   // ==========================================
   // STATISTICS
@@ -163,8 +289,18 @@ const AIModerationDashboard = () => {
     (item) => item.status === 'blocked'
   ).length;
 
-  const reportedCount = items.filter(
-    (item) => item.reported
+  const reportedCount = reports.length;
+
+  const pendingReports = reports.filter(
+    (report) => report.status === 'pending'
+  ).length;
+
+  const resolvedReports = reports.filter(
+    (report) => report.status === 'resolved'
+  ).length;
+
+  const dismissedReports = reports.filter(
+    (report) => report.status === 'dismissed'
   ).length;
 
   const safePercentage =
@@ -396,7 +532,9 @@ const AIModerationDashboard = () => {
         </div>
 
         <button
-          onClick={() => {
+          onClick={async () => {
+            await fetchReports();
+
             setSuccessMessage(
               'Moderation data refreshed.'
             );
@@ -424,7 +562,7 @@ const AIModerationDashboard = () => {
 
       {/* STATISTICS */}
 
-      <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-5 xl:grid-cols-5 gap-4">
 
         <ModerationStatCard
           label="Total Moderated"
@@ -577,7 +715,9 @@ const AIModerationDashboard = () => {
           </div>
 
           <button
-            onClick={() => setShowReportsOnly(true)}
+            onClick={() => {
+              document.getElementById('reports-section') ?.scrollIntoView({behavior: 'smooth',});
+            }}
             className="w-full mt-4 px-4 py-2.5 bg-[#FAF7F2] hover:bg-[#F3EEE5] border border-[#EDE8DF] rounded-xl text-xs font-semibold text-[#1A382B] transition"
           >
             View Reported Content
@@ -890,7 +1030,281 @@ const AIModerationDashboard = () => {
 
       </div>
 
-      {/* RECENT ACTIVITY */}
+      {/* USER REPORTS */}
+
+      <div
+        id="reports-section"
+        className="bg-white border border-[#EDE8DF] rounded-3xl p-5 sm:p-7"
+      >
+
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+
+          <div>
+            <h3 className="font-serif text-xl font-bold text-stone-900">
+              User Reports
+            </h3>
+
+            <p className="text-[11px] text-stone-500 mt-1">
+              Review reports submitted by users and manage their status.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+
+            <select
+              value={reportFilter}
+              onChange={(e) =>
+                setReportFilter(e.target.value)
+              }
+              className="px-3 py-2.5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-xl text-xs focus:outline-none"
+            >
+              <option value="all">All Reports</option>
+              <option value="pending">Pending</option>
+              <option value="resolved">Resolved</option>
+              <option value="dismissed">Dismissed</option>
+            </select>
+
+            <button
+              onClick={fetchReports}
+              className="inline-flex items-center gap-2 px-3 py-2.5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-xl text-xs font-semibold text-stone-700 hover:bg-[#F3EEE5]"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Refresh
+            </button>
+
+          </div>
+
+        </div>
+
+        {/* REPORT SUMMARY */}
+
+        <div className="grid grid-cols-3 gap-3 mb-6">
+
+          <SummaryBox
+            label="Pending"
+            value={pendingReports}
+            icon={Clock3}
+            className="text-amber-700 bg-amber-50 border-amber-100"
+          />
+
+          <SummaryBox
+            label="Resolved"
+            value={resolvedReports}
+            icon={CheckCircle2}
+            className="text-emerald-700 bg-emerald-50 border-emerald-100"
+          />
+
+          <SummaryBox
+            label="Dismissed"
+            value={dismissedReports}
+            icon={XCircle}
+            className="text-stone-600 bg-stone-50 border-stone-200"
+          />
+
+        </div>
+
+        {/* ERROR */}
+
+        {reportsError && (
+          <div className="mb-5 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800">
+            {reportsError}
+          </div>
+        )}
+
+        {/* LOADING */}
+
+        {reportsLoading ? (
+
+          <div className="py-12 text-center">
+
+            <RefreshCw className="w-7 h-7 mx-auto text-stone-300 animate-spin mb-3" />
+
+            <p className="text-xs text-stone-500">
+              Loading reports...
+            </p>
+
+          </div>
+
+        ) : ((() => {
+          const filteredReports =
+          reportFilter === 'all'
+          ? reports
+          : reports.filter(
+            (report) =>
+              report.status === reportFilter
+          );
+
+          if (filteredReports.length === 0) {
+            return (
+              <div className="py-12 text-center">
+
+                <Flag className="w-8 h-8 mx-auto text-stone-300 mb-3" />
+
+                <p className="text-sm font-semibold text-stone-600">
+                  No reports found.
+                </p>
+
+                <p className="text-xs text-stone-400 mt-1">
+                  There are no reports matching the selected filter.
+                </p>
+
+              </div>
+            );
+          }
+
+          return (
+            <div className="overflow-x-auto">
+
+              <table className="w-full text-left text-xs">
+
+                <thead>
+
+                  <tr className="border-b border-[#F5F2EB] text-stone-500">
+
+                    <th className="pb-3 pl-2">
+                      Report
+                    </th>
+
+                    <th className="pb-3">
+                      Type
+                    </th>
+
+                    <th className="pb-3">
+                      Reported By
+                    </th>
+
+                    <th className="pb-3">
+                      Reason
+                    </th>
+
+                    <th className="pb-3">
+                      Status
+                    </th>
+
+                    <th className="pb-3 text-right">
+                      Action
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody className="divide-y divide-[#F5F2EB]">
+
+                  {filteredReports.map((report) => (
+
+                    <tr
+                      key={report._id}
+                      className="hover:bg-[#FAF7F2]/60"
+                    >
+
+                      <td className="py-4 pl-2">
+
+                        <div className="max-w-xs">
+
+                          <span className="block font-bold text-stone-900 line-clamp-1">
+                            {report.item}
+                          </span>
+
+                          {report.description && (
+                            <span className="block text-[10px] text-stone-400 mt-1 line-clamp-1">
+                              {report.description}
+                            </span>
+                          )}
+
+                        </div>
+
+                      </td>
+
+                      <td className="py-4">
+                        <span className="inline-flex items-center gap-1.5 text-stone-600">
+                          {report.type === 'Article' ? (
+                            <FileText className="w-3.5 h-3.5" />
+                          ) : (
+                            <Flag className="w-3.5 h-3.5" />
+                          )}
+                          {report.type}
+                        </span>
+                      </td>
+
+                      <td className="py-4">
+                        <span className="text-stone-700 font-medium">
+                          {report.reportedBy}
+                        </span>
+                      </td>
+
+                      <td className="py-4">
+                        <span className="text-stone-600">
+                          {report.reason}
+                        </span>
+                      </td>
+
+                      <td className="py-4">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-lg border text-[9px] font-bold uppercase tracking-wide ${
+                            report.status === 'pending'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : report.status === 'resolved'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : 'bg-stone-100 text-stone-600 border-stone-200'
+                          }`}
+                        >
+                          {report.status}
+                        </span>
+                      </td>
+
+                      <td className="py-4 text-right">
+
+                        <div className="inline-flex items-center gap-2">
+                          {report.status === 'pending' && (
+                            <>
+                              <button
+                                onClick={() =>
+                                  updateReportStatus(
+                                    report._id,
+                                    'resolved'
+                                  )
+                                }
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                Resolve
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  updateReportStatus(
+                                    report._id,
+                                    'dismissed'
+                                  )
+                                }
+                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-700 font-semibold hover:bg-stone-100"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                Dismiss
+                              </button>
+                            </>    
+                          )}
+                        </div>
+                      </td>
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+          );
+
+        })()
+        )}
+
+      </div>
+
+      {/* RECENT MODERATION ACTIVITY */}
 
       <div className="bg-white border border-[#EDE8DF] rounded-3xl p-6">
 

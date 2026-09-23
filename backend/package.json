@@ -8,7 +8,6 @@
     "dev": "nodemon server.js",
     "seed": "node seeds/userSeed.js",
     "test": "jest --detectOpenHandles --forceExit"
-
   },
   "keywords": [
     "lumen",
