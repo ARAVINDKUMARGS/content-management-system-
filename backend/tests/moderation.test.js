@@ -1,9 +1,22 @@
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
+
+// Mock the database models because tests intentionally run without MongoDB.
+jest.mock('../models/Article', () => ({
+  find: jest.fn(),
+}));
+
+jest.mock('../models/Quiz', () => ({
+  find: jest.fn(),
+}));
+
+const Article = require('../models/Article');
+const Quiz = require('../models/Quiz');
 const app = require('../server');
 
 const jwtSecret =
-  process.env.JWT_SECRET || 'lumen_super_secret_jwt_key_2026_cms_platform';
+  process.env.JWT_SECRET ||
+  'lumen_super_secret_jwt_key_2026_cms_platform';
 
 const adminToken = jwt.sign(
   { id: '66c9f1a00000000000000001' },
@@ -13,6 +26,23 @@ const adminToken = jwt.sign(
 jest.setTimeout(30000);
 
 describe('AI Moderation Integration Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Mock Article.find() query chain
+    Article.find.mockReturnValue({
+      select: jest.fn().mockResolvedValue([]),
+      populate: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockResolvedValue([]),
+    });
+
+    // Mock Quiz.find() query chain
+    Quiz.find.mockReturnValue({
+      select: jest.fn().mockResolvedValue([]),
+      populate: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockResolvedValue([]),
+    });
+  });
 
   test('Admin can get AI moderation statistics', async () => {
     const res = await request(app)
@@ -44,5 +74,4 @@ describe('AI Moderation Integration Tests', () => {
     expect(res.statusCode).toBe(401);
     expect(res.body.success).toBe(false);
   });
-
 });

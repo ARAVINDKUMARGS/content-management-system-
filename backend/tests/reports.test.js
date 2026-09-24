@@ -9,6 +9,7 @@ describe('Reports API Tests', () => {
   it('POST /api/reports - should allow submitting a content report', async () => {
     const res = await request(app)
       .post('/api/reports')
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({
         type: 'Article',
         item: 'Test Reported Article',
