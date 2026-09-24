@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   ShieldAlert,
   ShieldCheck,
@@ -14,8 +14,10 @@ import {
   Bot,
 } from 'lucide-react';
 import { moderationAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const AIModerationDashboard = () => {
+  const { token, isAdmin } = useAuth();
   const [stats, setStats] = useState({
     totalScanned: 0,
     lowRisk: 0,
@@ -36,6 +38,10 @@ const AIModerationDashboard = () => {
 
   // Selected item for modal
   const [selectedItem, setSelectedItem] = useState(null);
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(true);
+  const [reportsError, setReportsError] = useState('');
+  const [reportFilter, setReportFilter] = useState('all');
 
   const fetchData = async () => {
     setLoading(true);
@@ -63,9 +69,95 @@ const AIModerationDashboard = () => {
     }
   };
 
+  const fetchReports = async () => {
+    if (!token || !isAdmin) return;
+
+    setReportsLoading(true);
+    setReportsError('');
+
+    try {
+      const response = await fetch(
+        'http://localhost:5000/api/reports',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Failed to load reports.'
+        );
+      }
+
+      setReports(data.reports || []);
+    } catch (error) {
+      console.error('Fetch Reports Error:', error);
+
+      setReportsError(
+        error.message || 'Failed to load reports.'
+      );
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
+  const updateReportStatus = async (reportId, status) => {
+    try {
+      setReportsError('');
+
+      const response = await fetch(
+        `http://localhost:5000/api/reports/${reportId}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Failed to update report status.'
+        );
+      }
+
+      setReports((prev) =>
+        prev.map((report) =>
+          report._id === reportId
+            ? { ...report, status }
+            : report
+        )
+      );
+    } catch (error) {
+      console.error(
+        'Update Report Status Error:',
+        error
+      );
+
+      setReportsError(
+        error.message ||
+          'Failed to update report status.'
+      );
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, [levelFilter, typeFilter]);
+
+  useEffect(() => {
+    if (token && isAdmin) {
+      fetchReports();
+    }
+  }, [token, isAdmin]);
 
   const handleRescan = async (type, id) => {
     setRescanningId(id);
@@ -95,11 +187,29 @@ const AIModerationDashboard = () => {
   // Filter items by search query
   const filteredItems = items.filter((item) => {
     const q = searchQuery.toLowerCase();
+
     const titleMatch = item.title?.toLowerCase().includes(q);
+
     const authorMatch = item.author?.toLowerCase().includes(q);
-    const flagsMatch = item.aiModeration?.flags?.some((f) => f.toLowerCase().includes(q));
+
+    const flagsMatch = item.aiModeration?.flags?.some((f) =>
+      f.toLowerCase().includes(q)
+    );
+
     return titleMatch || authorMatch || flagsMatch;
   });
+
+  const pendingReports = reports.filter(
+    (report) => report.status === 'pending'
+  ).length;
+
+  const resolvedReports = reports.filter(
+    (report) => report.status === 'resolved'
+  ).length;
+
+  const dismissedReports = reports.filter(
+    (report) => report.status === 'dismissed'
+  ).length;
 
   const getRiskBadge = (level, score) => {
     switch (level) {
@@ -185,7 +295,7 @@ const AIModerationDashboard = () => {
     try {
       const res = await moderationAPI.rescanAll();
       if (res.data?.success) {
-        setSuccessMsg(`✅ ${res.data.message}`);
+        setSuccessMsg(`Γ£à ${res.data.message}`);
         fetchData();
       }
     } catch (err) {
@@ -212,7 +322,7 @@ const AIModerationDashboard = () => {
               </span>
             </div>
             <p className="text-sm text-slate-300 mt-1">
-              Automated multi-tier safety scanning: Low risk (0–39) auto-publishes, moderate (40–69) notifies admin, high (70–100) is blocked.
+              Automated multi-tier safety scanning: Low risk (0ΓÇô39) auto-publishes, moderate (40ΓÇô69) notifies admin, high (70ΓÇô100) is blocked.
             </p>
           </div>
         </div>
@@ -249,7 +359,7 @@ const AIModerationDashboard = () => {
       <div className="p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-xl text-blue-900 text-xs flex items-start gap-2.5">
         <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
         <div>
-          <span className="font-semibold">How Risk Scores Work:</span> Risk score measures <span className="font-semibold">danger/violations</span>. A score of <span className="font-semibold text-emerald-700">0/100 means 0% Risk (Completely Clean & Safe)</span>, which is why clean articles auto-publish immediately. Higher scores represent higher violation severity (40–69 = Moderate, 70–100 = High).
+          <span className="font-semibold">How Risk Scores Work:</span> Risk score measures <span className="font-semibold">danger/violations</span>. A score of <span className="font-semibold text-emerald-700">0/100 means 0% Risk (Completely Clean & Safe)</span>, which is why clean articles auto-publish immediately. Higher scores represent higher violation severity (40ΓÇô69 = Moderate, 70ΓÇô100 = High).
         </div>
       </div>
 
@@ -286,7 +396,7 @@ const AIModerationDashboard = () => {
         {/* Low Risk */}
         <div className="bg-white p-5 rounded-xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Low Risk (0–39)</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Low Risk (0ΓÇô39)</span>
             <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
               <ShieldCheck className="w-5 h-5" />
             </div>
@@ -300,7 +410,7 @@ const AIModerationDashboard = () => {
         {/* Moderate Risk */}
         <div className="bg-white p-5 rounded-xl border border-amber-100 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-amber-600">Moderate Risk (40–69)</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-amber-600">Moderate Risk (40ΓÇô69)</span>
             <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
               <AlertTriangle className="w-5 h-5" />
             </div>
@@ -314,7 +424,7 @@ const AIModerationDashboard = () => {
         {/* High Risk */}
         <div className="bg-white p-5 rounded-xl border border-rose-100 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-rose-600">High Risk (70–100)</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-rose-600">High Risk (70ΓÇô100)</span>
             <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
               <ShieldAlert className="w-5 h-5" />
             </div>
@@ -332,9 +442,9 @@ const AIModerationDashboard = () => {
         <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100 rounded-lg">
           {[
             { id: 'all', label: 'All Content' },
-            { id: 'low', label: '🟢 Low' },
-            { id: 'moderate', label: '🟡 Moderate' },
-            { id: 'high', label: '🔴 High' },
+            { id: 'low', label: '≡ƒƒó Low' },
+            { id: 'moderate', label: '≡ƒƒí Moderate' },
+            { id: 'high', label: '≡ƒö┤ High' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -512,6 +622,279 @@ const AIModerationDashboard = () => {
         )}
       </div>
 
+      {/* USER REPORTS */}
+
+      <div
+        id="reports-section"
+        className="bg-white border border-[#EDE8DF] rounded-3xl p-5 sm:p-7"
+      >
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+
+          <div>
+            <h3 className="font-serif text-xl font-bold text-stone-900">
+              User Reports
+            </h3>
+
+            <p className="text-[11px] text-stone-500 mt-1">
+              Review reports submitted by users and manage their status.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+
+            <select
+              value={reportFilter}
+              onChange={(e) =>
+                setReportFilter(e.target.value)
+              }
+              className="px-3 py-2.5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-xl text-xs focus:outline-none"
+            >
+              <option value="all">All Reports</option>
+              <option value="pending">Pending</option>
+              <option value="resolved">Resolved</option>
+              <option value="dismissed">Dismissed</option>
+            </select>
+
+            <button
+              onClick={fetchReports}
+              className="inline-flex items-center gap-2 px-3 py-2.5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-xl text-xs font-semibold text-stone-700 hover:bg-[#F3EEE5]"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Refresh
+            </button>
+
+          </div>
+        </div>
+
+        {/* REPORT SUMMARY */}
+
+        <div className="grid grid-cols-3 gap-3 mb-6">
+
+          <div className="border border-amber-100 bg-amber-50 rounded-2xl p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+              Pending
+            </p>
+
+            <p className="text-2xl font-bold text-amber-800 mt-2">
+              {pendingReports}
+            </p>
+          </div>
+
+          <div className="border border-emerald-100 bg-emerald-50 rounded-2xl p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+              Resolved
+            </p>
+
+            <p className="text-2xl font-bold text-emerald-800 mt-2">
+              {resolvedReports}
+            </p>
+          </div>
+
+          <div className="border border-stone-200 bg-stone-50 rounded-2xl p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-600">
+              Dismissed
+            </p>
+
+            <p className="text-2xl font-bold text-stone-700 mt-2">
+              {dismissedReports}
+            </p>
+          </div>
+
+        </div>
+
+        {/* REPORT TABLE */}
+
+        <div className="border border-[#EDE8DF] rounded-2xl overflow-hidden">
+
+          {reportsLoading ? (
+            <div className="py-12 text-center text-stone-500">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
+              <p className="text-sm">Loading reports...</p>
+            </div>
+
+          ) : reportsError ? (
+            <div className="py-12 text-center text-rose-500">
+              <XCircle className="w-6 h-6 mx-auto mb-2" />
+              <p className="text-sm">{reportsError}</p>
+            </div>
+
+          ) : reports.filter(
+            (report) =>
+              reportFilter === 'all' ||
+              report.status === reportFilter
+          ).length === 0 ? (
+
+            <div className="py-12 text-center text-stone-400">
+              <Info className="w-8 h-8 mx-auto mb-2 text-stone-300" />
+              <p className="text-sm font-medium">
+                No reports found.
+              </p>
+              <p className="text-xs mt-1">
+                There are no reports matching the selected filter.
+              </p>
+            </div>
+
+          ) : (
+
+            <div className="overflow-x-auto">
+
+              <table className="w-full text-left">
+
+                <thead className="bg-[#FAF7F2] border-b border-[#EDE8DF]">
+                  <tr>
+
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
+                      Type
+                    </th>
+
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
+                      Reported Item
+                    </th>
+
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
+                      Reason
+                    </th> 
+
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
+                      Reported By
+                    </th>
+
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
+                      Status
+                    </th>
+
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500 text-right">
+                      Action
+                    </th>
+
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-[#EDE8DF]">
+
+                  {reports
+                    .filter(
+                      (report) =>
+                        reportFilter === 'all' ||
+                        report.status === reportFilter
+                    )
+                  .map((report) => (
+
+                    <tr
+                      key={report._id}
+                      className="hover:bg-[#FAF7F2] transition-colors"
+                    >
+
+                      {/* Type */}
+                      <td className="px-5 py-4">
+                        <span className="inline-flex px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-semibold">
+                          {report.type || 'Other'}
+                        </span>
+                      </td>
+
+                      {/* Item */}
+                      <td className="px-5 py-4">
+                        <p className="text-xs font-semibold text-stone-800 max-w-[220px] truncate">
+                          {report.item || 'Unknown item'}
+                        </p>
+
+                        {report.description && (
+                          <p className="text-[10px] text-stone-400 mt-1 max-w-[220px] truncate">
+                            {report.description}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Reason */}
+                      <td className="px-5 py-4">
+                        <span className="text-xs text-stone-700">
+                          {report.reason || 'No reason provided'}
+                        </span>
+                      </td>
+
+                      {/* Reported By */}
+                      <td className="px-5 py-4">
+                        <p className="text-xs font-medium text-stone-800">
+                          {report.reportedBy || 'Unknown'}
+                        </p>
+
+                        {report.reporterId && (
+                          <p className="text-[10px] text-stone-400 mt-1">
+                            User ID: {report.reporterId}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-5 py-4">
+
+                        <span
+                          className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-semibold capitalize ${
+                            report.status === 'pending'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-100'
+                              : report.status === 'resolved'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                              : 'bg-stone-100 text-stone-600 border border-stone-200'
+                          }`}
+                        >
+                          {report.status}
+                        </span>
+
+                      </td>
+
+                      {/* Action */}
+                      <td className="px-5 py-4 text-right">
+
+                        <div className="flex justify-end gap-2">
+
+                          {report.status !== 'resolved' && (
+                            <button
+                              onClick={() =>
+                                updateReportStatus(
+                                  report._id,
+                                  'resolved'
+                                )
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-semibold hover:bg-emerald-100 transition-colors"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Resolve
+                            </button>
+                          )}
+
+                          {report.status !== 'dismissed' && (
+                            <button
+                              onClick={() =>
+                                updateReportStatus(
+                                  report._id,
+                                  'dismissed'
+                                )
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-50 text-stone-600 border border-stone-200 text-[10px] font-semibold hover:bg-stone-100 transition-colors"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              Dismiss
+                            </button>
+                          )}
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+          )}
+
+        </div>
+      </div>
+
       {/* Details Modal */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
@@ -526,7 +909,7 @@ const AIModerationDashboard = () => {
                 onClick={() => setSelectedItem(null)}
                 className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
               >
-                ✕
+                Γ£ò
               </button>
             </div>
 
