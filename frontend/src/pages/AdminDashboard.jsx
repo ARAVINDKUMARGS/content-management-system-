@@ -29,6 +29,7 @@ import {
   CheckCircle2,
   Clock3,
   XCircle,
+  Bot,
 } from 'lucide-react';
 
 const AdminDashboard = () => {

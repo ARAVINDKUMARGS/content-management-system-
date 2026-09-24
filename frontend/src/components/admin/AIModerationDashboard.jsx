@@ -1,194 +1,157 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
+﻿import React, { useState, useEffect } from 'react';
 import {
+  ShieldAlert,
   ShieldCheck,
   AlertTriangle,
+  RefreshCw,
+  Search,
   CheckCircle2,
   XCircle,
-  Flag,
-  FileText,
-  BookOpen,
-  Search,
-  Eye,
-  Ban,
-  Check,
-  Clock3,
-  Activity,
-  BarChart3,
-  RefreshCw,
+  Clock,
+  Sparkles,
+  Info,
+  ExternalLink,
+  Bot,
 } from 'lucide-react';
-
-const initialModerationItems = [
-  {
-    id: 1,
-    title: 'Understanding Modern Web Development',
-    type: 'Article',
-    author: 'John Mathew',
-    riskScore: 12,
-    status: 'safe',
-    reason: 'No issues detected',
-    reported: false,
-  },
-  {
-    id: 2,
-    title: 'Advanced JavaScript Techniques',
-    type: 'Article',
-    author: 'David Wilson',
-    riskScore: 67,
-    status: 'review',
-    reason: 'Content requires manual review',
-    reported: true,
-  },
-  {
-    id: 3,
-    title: 'Introduction to Cyber Security',
-    type: 'Article',
-    author: 'Sarah Thomas',
-    riskScore: 91,
-    status: 'blocked',
-    reason: 'Policy violation',
-    reported: true,
-  },
-  {
-    id: 4,
-    title: 'Python Programming Basics',
-    type: 'Quiz',
-    author: 'Alex Kumar',
-    riskScore: 24,
-    status: 'safe',
-    reason: 'No issues detected',
-    reported: false,
-  },
-  {
-    id: 5,
-    title: 'Social Media and Digital Safety',
-    type: 'Article',
-    author: 'Priya Shah',
-    riskScore: 58,
-    status: 'review',
-    reason: 'Reported by a user',
-    reported: true,
-  },
-  {
-    id: 6,
-    title: 'Database Security Fundamentals',
-    type: 'Quiz',
-    author: 'Rahul Patil',
-    riskScore: 76,
-    status: 'review',
-    reason: 'High-risk content detected',
-    reported: false,
-  },
-  {
-    id: 7,
-    title: 'Data Structures and Algorithms',
-    type: 'Article',
-    author: 'Neha Joshi',
-    riskScore: 8,
-    status: 'safe',
-    reason: 'No issues detected',
-    reported: false,
-  },
-  {
-    id: 8,
-    title: 'Ethical Hacking Overview',
-    type: 'Article',
-    author: 'Amit Kumar',
-    riskScore: 88,
-    status: 'blocked',
-    reason: 'Content policy violation',
-    reported: true,
-  },
-];
-
-const initialActivity = [
-  {
-    id: 1,
-    text: 'Article approved',
-    user: 'John Mathew',
-    time: '2 min ago',
-    type: 'approved',
-  },
-  {
-    id: 2,
-    text: 'Content flagged for review',
-    user: 'David Wilson',
-    time: '8 min ago',
-    type: 'review',
-  },
-  {
-    id: 3,
-    text: 'Report submitted',
-    user: 'Sarah Thomas',
-    time: '15 min ago',
-    type: 'report',
-  },
-  {
-    id: 4,
-    text: 'Content blocked',
-    user: 'Amit Kumar',
-    time: '32 min ago',
-    type: 'blocked',
-  },
-];
+import { moderationAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 const AIModerationDashboard = () => {
   const { token, isAdmin } = useAuth();
-  const [items, setItems] = useState(initialModerationItems);
-  const [activities, setActivities] = useState(initialActivity);
+  const [stats, setStats] = useState({
+    totalScanned: 0,
+    lowRisk: 0,
+    moderateRisk: 0,
+    highRisk: 0,
+    averageScore: 0,
+  });
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [rescanningId, setRescanningId] = useState(null);
+  const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
+  // Filters
+  const [levelFilter, setLevelFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Selected item for modal
+  const [selectedItem, setSelectedItem] = useState(null);
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(true);
   const [reportsError, setReportsError] = useState('');
   const [reportFilter, setReportFilter] = useState('all');
 
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [riskFilter, setRiskFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
+  const fetchData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [statsRes, contentRes] = await Promise.all([
+        moderationAPI.getStats(),
+        moderationAPI.getContent({
+          level: levelFilter !== 'all' ? levelFilter : undefined,
+          type: typeFilter !== 'all' ? typeFilter : undefined,
+        }),
+      ]);
 
-  const [selectedItem, setSelectedItem] = useState(null);
-
-  const [successMessage, setSuccessMessage] = useState('');
-  const [showReportsOnly, setShowReportsOnly] = useState(false);
+      if (statsRes.data?.success) {
+        setStats(statsRes.data.stats);
+      }
+      if (contentRes.data?.success) {
+        setItems(contentRes.data.items || []);
+      }
+    } catch (err) {
+      console.error('Fetch Moderation Data Error:', err);
+      setError(err.response?.data?.message || 'Failed to load AI moderation records.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchReports = async () => {
+    if (!token || !isAdmin) return;
+
+    setReportsLoading(true);
+    setReportsError('');
+
     try {
-      setReportsLoading(true);
-      setReportsError('');
-
-      if (!token) {
-        setReportsError('Authentication token not found.');
-        return;
-      }
-
-      const response = await axios.get(
+      const response = await fetch(
         'http://localhost:5000/api/reports',
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
+        }
       );
 
-      if (response.data?.success) {
-        setReports(response.data.reports || []);
-      } else {
-        setReportsError(
-          response.data?.message || 'Failed to load reports.'
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Failed to load reports.'
         );
       }
+
+      setReports(data.reports || []);
     } catch (error) {
-      console.error('Fetch reports error:', error);
+      console.error('Fetch Reports Error:', error);
+
       setReportsError(
-        error.response?.data?.message ||
-          'Failed to load reports.'
+        error.message || 'Failed to load reports.'
       );
     } finally {
       setReportsLoading(false);
     }
   };
+
+  const updateReportStatus = async (reportId, status) => {
+    try {
+      setReportsError('');
+
+      const response = await fetch(
+        `http://localhost:5000/api/reports/${reportId}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || 'Failed to update report status.'
+        );
+      }
+
+      setReports((prev) =>
+        prev.map((report) =>
+          report._id === reportId
+            ? { ...report, status }
+            : report
+        )
+      );
+    } catch (error) {
+      console.error(
+        'Update Report Status Error:',
+        error
+      );
+
+      setReportsError(
+        error.message ||
+          'Failed to update report status.'
+      );
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [levelFilter, typeFilter]);
 
   useEffect(() => {
     if (token && isAdmin) {
@@ -196,100 +159,45 @@ const AIModerationDashboard = () => {
     }
   }, [token, isAdmin]);
 
-const updateReportStatus = async (reportId, status) => {
-  try {
-    setReportsError('');
-
-    if (!token) {
-      setReportsError('Authentication token not found.');
-      return;
-    }
-
-    const response = await axios.patch(
-      `http://localhost:5000/api/reports/${reportId}/status`,
-      {
-        status,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const handleRescan = async (type, id) => {
+    setRescanningId(id);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const res = await moderationAPI.rescanContent(type, id);
+      if (res.data?.success) {
+        setSuccessMsg(res.data.message || 'Content successfully rescanned with AI.');
+        fetchData();
+        if (selectedItem && selectedItem._id === id) {
+          setSelectedItem((prev) => ({
+            ...prev,
+            aiModeration: res.data.aiModeration,
+            status: res.data.status,
+          }));
+        }
       }
-    );
-
-    if (response.data?.success) {
-      setReports((prev) =>
-        prev.map((report) =>
-          report._id === reportId
-            ? {
-                ...report,
-                status,
-              }
-            : report
-        )
-      );
-
-      setSuccessMessage(
-        status === 'resolved'
-          ? 'Report resolved successfully.'
-          : 'Report dismissed successfully.'
-      );
-
-      setActivities((prev) => [
-        {
-          id: Date.now(),
-          text:
-            status === 'resolved'
-              ? 'Report resolved'
-              : 'Report dismissed',
-          user:
-            response.data.report?.reportedBy ||
-            'Admin',
-          time: 'Just now',
-          type:
-            status === 'resolved'
-              ? 'approved'
-              : 'report',
-        },
-        ...prev,
-      ]);
-
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
+    } catch (err) {
+      console.error('Rescan error:', err);
+      setError(err.response?.data?.message || 'Failed to rescan content.');
+    } finally {
+      setRescanningId(null);
     }
-  } catch (error) {
-    console.error(
-      'Update report status error:',
-      error
+  };
+
+  // Filter items by search query
+  const filteredItems = items.filter((item) => {
+    const q = searchQuery.toLowerCase();
+
+    const titleMatch = item.title?.toLowerCase().includes(q);
+
+    const authorMatch = item.author?.toLowerCase().includes(q);
+
+    const flagsMatch = item.aiModeration?.flags?.some((f) =>
+      f.toLowerCase().includes(q)
     );
 
-    setReportsError(
-      error.response?.data?.message ||
-        'Failed to update report status.'
-    );
-  }
-};
-
-  // ==========================================
-  // STATISTICS
-  // ==========================================
-
-  const totalModerated = items.length;
-
-  const safeCount = items.filter(
-    (item) => item.status === 'safe'
-  ).length;
-
-  const reviewCount = items.filter(
-    (item) => item.status === 'review'
-  ).length;
-
-  const blockedCount = items.filter(
-    (item) => item.status === 'blocked'
-  ).length;
-
-  const reportedCount = reports.length;
+    return titleMatch || authorMatch || flagsMatch;
+  });
 
   const pendingReports = reports.filter(
     (report) => report.status === 'pending'
@@ -303,731 +211,415 @@ const updateReportStatus = async (reportId, status) => {
     (report) => report.status === 'dismissed'
   ).length;
 
-  const safePercentage =
-    totalModerated > 0
-      ? Math.round((safeCount / totalModerated) * 100)
-      : 0;
-
-  const reviewPercentage =
-    totalModerated > 0
-      ? Math.round((reviewCount / totalModerated) * 100)
-      : 0;
-
-  const blockedPercentage =
-    totalModerated > 0
-      ? Math.round((blockedCount / totalModerated) * 100)
-      : 0;
-
-  // ==========================================
-  // FILTERING
-  // ==========================================
-
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const searchValue = search.toLowerCase();
-
-      const matchesSearch =
-        item.title.toLowerCase().includes(searchValue) ||
-        item.author.toLowerCase().includes(searchValue);
-
-      const matchesStatus =
-        statusFilter === 'all' ||
-        item.status === statusFilter;
-
-      const matchesType =
-        typeFilter === 'all' ||
-        item.type === typeFilter;
-
-      let matchesRisk = true;
-
-      if (riskFilter === 'low') {
-        matchesRisk = item.riskScore < 40;
-      }
-
-      if (riskFilter === 'medium') {
-        matchesRisk =
-          item.riskScore >= 40 &&
-          item.riskScore < 70;
-      }
-
-      if (riskFilter === 'high') {
-        matchesRisk = item.riskScore >= 70;
-      }
-
-      const matchesReports =
-        !showReportsOnly || item.reported;
-
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesType &&
-        matchesRisk &&
-        matchesReports
-      );
-    });
-  }, [
-    items,
-    search,
-    statusFilter,
-    riskFilter,
-    typeFilter,
-    showReportsOnly,
-  ]);
-
-  // ==========================================
-  // ACTIONS
-  // ==========================================
-
-  const updateModerationStatus = (id, status) => {
-    const selected = items.find(
-      (item) => item.id === id
-    );
-
-    if (!selected) return;
-
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status,
-              reported: false,
-            }
-          : item
-      )
-    );
-
-    const activityText =
-      status === 'safe'
-        ? 'Content approved'
-        : 'Content blocked';
-
-    setActivities((prev) => [
-      {
-        id: Date.now(),
-        text: activityText,
-        user: selected.author,
-        time: 'Just now',
-        type:
-          status === 'safe'
-            ? 'approved'
-            : 'blocked',
-      },
-      ...prev,
-    ]);
-
-    setSelectedItem(null);
-
-    setSuccessMessage(
-      status === 'safe'
-        ? 'Content approved successfully.'
-        : 'Content blocked successfully.'
-    );
-
-    setTimeout(() => {
-      setSuccessMessage('');
-    }, 3000);
-  };
-
-  const resetFilters = () => {
-    setSearch('');
-    setStatusFilter('all');
-    setRiskFilter('all');
-    setTypeFilter('all');
-    setShowReportsOnly(false);
-  };
-
-  // ==========================================
-  // HELPERS
-  // ==========================================
-
-  const getRiskLabel = (score) => {
-    if (score < 40) return 'Safe';
-    if (score < 70) return 'Needs Review';
-    return 'High Risk';
-  };
-
-  const getRiskStyle = (score) => {
-    if (score < 40) {
-      return 'bg-emerald-50 text-emerald-800 border-emerald-200';
-    }
-
-    if (score < 70) {
-      return 'bg-amber-50 text-amber-800 border-amber-200';
-    }
-
-    return 'bg-rose-50 text-rose-800 border-rose-200';
-  };
-
-  const getRiskBarStyle = (score) => {
-    if (score < 40) {
-      return 'bg-emerald-500';
-    }
-
-    if (score < 70) {
-      return 'bg-amber-500';
-    }
-
-    return 'bg-rose-500';
-  };
-
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'safe':
-        return 'bg-emerald-50 text-emerald-800 border-emerald-200';
-
-      case 'review':
-        return 'bg-amber-50 text-amber-800 border-amber-200';
-
-      case 'blocked':
-        return 'bg-rose-50 text-rose-800 border-rose-200';
-
+  const getRiskBadge = (level, score) => {
+    switch (level) {
+      case 'low':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            Low Risk ({score ?? 0})
+          </span>
+        );
+      case 'moderate':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 border border-amber-500/20">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+            Moderate ({score ?? 0})
+          </span>
+        );
+      case 'high':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-600 border border-rose-500/20">
+            <XCircle className="w-3.5 h-3.5 text-rose-500" />
+            High Risk ({score ?? 0})
+          </span>
+        );
       default:
-        return 'bg-stone-100 text-stone-700 border-stone-200';
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-500 border border-slate-500/20">
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            Unscanned
+          </span>
+        );
     }
   };
 
-  const getStatusLabel = (status) => {
-    switch (status) {
-      case 'safe':
-        return 'Safe';
+  const getScoreBar = (score, level) => {
+    const s = Math.min(100, Math.max(0, score || 0));
+    let colorClass = 'bg-emerald-500';
+    if (level === 'moderate' || (s >= 40 && s < 70)) colorClass = 'bg-amber-500';
+    if (level === 'high' || s >= 70) colorClass = 'bg-rose-500';
 
-      case 'review':
-        return 'Needs Review';
+    return (
+      <div className="w-full max-w-[120px]">
+        <div className="flex justify-between text-[11px] font-medium text-slate-500 mb-1">
+          <span>Score</span>
+          <span className="font-semibold text-slate-700">{score ?? '--'}/100</span>
+        </div>
+        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-300 ${colorClass}`}
+            style={{ width: `${score !== null ? s : 0}%` }}
+          />
+        </div>
+      </div>
+    );
+  };
 
-      case 'blocked':
-        return 'Blocked';
+  const [scanningAll, setScanningAll] = useState(false);
+  const [rescanningAll, setRescanningAll] = useState(false);
 
-      default:
-        return status;
+  const handleScanAll = async () => {
+    setScanningAll(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const res = await moderationAPI.scanAll();
+      if (res.data?.success) {
+        setSuccessMsg(res.data.message || 'All items have been analyzed.');
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Scan all error:', err);
+      setError(err.response?.data?.message || 'Failed to scan all items.');
+    } finally {
+      setScanningAll(false);
     }
   };
 
-  // ==========================================
-  // RENDER
-  // ==========================================
+  const handleRescanAll = async () => {
+    if (!window.confirm('This will rescan ALL content with Gemini AI (including already-scanned items). This may take a minute. Proceed?')) return;
+    setRescanningAll(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const res = await moderationAPI.rescanAll();
+      if (res.data?.success) {
+        setSuccessMsg(`Γ£à ${res.data.message}`);
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Rescan all error:', err);
+      setError(err.response?.data?.message || 'Failed to rescan all content.');
+    } finally {
+      setRescanningAll(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
-
-      {/* HEADER */}
-
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-
-        <div>
-
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-50 text-purple-900 border border-purple-200 rounded-full text-xs font-semibold mb-2">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            AI Moderation
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl text-white shadow-xl">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-indigo-500/20 border border-indigo-400/30 rounded-xl backdrop-blur-md">
+            <Bot className="w-7 h-7 text-indigo-300" />
           </div>
-
-          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900">
-            Moderation Dashboard
-          </h2>
-
-          <p className="text-xs text-stone-500 mt-1">
-            Monitor content risk, reports and moderation activity.
-          </p>
-
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-bold tracking-tight">AI Content Moderation Engine</h2>
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <Sparkles className="w-3 h-3" /> Active
+              </span>
+            </div>
+            <p className="text-sm text-slate-300 mt-1">
+              Automated multi-tier safety scanning: Low risk (0ΓÇô39) auto-publishes, moderate (40ΓÇô69) notifies admin, high (70ΓÇô100) is blocked.
+            </p>
+          </div>
         </div>
-
-        <button
-          onClick={async () => {
-            await fetchReports();
-
-            setSuccessMessage(
-              'Moderation data refreshed.'
-            );
-
-            setTimeout(() => {
-              setSuccessMessage('');
-            }, 2500);
-          }}
-          className="self-start inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-[#EDE8DF] hover:bg-[#FAF7F2] text-stone-700 rounded-xl text-xs font-semibold"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          Refresh
-        </button>
-
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleScanAll}
+            disabled={scanningAll || rescanningAll || loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 border border-indigo-400/40 text-white font-medium text-sm transition-all shadow-md self-start md:self-auto disabled:opacity-50"
+          >
+            <Sparkles className={`w-4 h-4 ${scanningAll ? 'animate-spin' : ''}`} />
+            {scanningAll ? 'Scanning...' : 'Scan New Items'}
+          </button>
+          <button
+            onClick={handleRescanAll}
+            disabled={rescanningAll || scanningAll || loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 border border-rose-400/40 text-white font-medium text-sm transition-all shadow-md self-start md:self-auto disabled:opacity-50"
+            title="Force rescan ALL content with Gemini AI (fixes stale 0-score records)"
+          >
+            <ShieldAlert className={`w-4 h-4 ${rescanningAll ? 'animate-spin' : ''}`} />
+            {rescanningAll ? 'Rescanning All...' : 'Rescan All with AI'}
+          </button>
+          <button
+            onClick={fetchData}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium text-sm transition-all duration-150 backdrop-blur-md self-start md:self-auto"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
-      {/* SUCCESS MESSAGE */}
+      {/* Info Tip about Risk Score meaning */}
+      <div className="p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-xl text-blue-900 text-xs flex items-start gap-2.5">
+        <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <span className="font-semibold">How Risk Scores Work:</span> Risk score measures <span className="font-semibold">danger/violations</span>. A score of <span className="font-semibold text-emerald-700">0/100 means 0% Risk (Completely Clean & Safe)</span>, which is why clean articles auto-publish immediately. Higher scores represent higher violation severity (40ΓÇô69 = Moderate, 70ΓÇô100 = High).
+        </div>
+      </div>
 
-      {successMessage && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" />
-          {successMessage}
+      {/* Notifications */}
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-center gap-3">
+          <XCircle className="w-5 h-5 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+      {successMsg && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+          <span>{successMsg}</span>
         </div>
       )}
 
-      {/* STATISTICS */}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Scanned */}
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Scanned</span>
+            <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+              <Bot className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-slate-800">{stats.totalScanned}</span>
+            <span className="text-xs text-slate-400">items analyzed</span>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-5 xl:grid-cols-5 gap-4">
+        {/* Low Risk */}
+        <div className="bg-white p-5 rounded-xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Low Risk (0ΓÇô39)</span>
+            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-emerald-700">{stats.lowRisk}</span>
+            <span className="text-xs font-medium text-emerald-600">Auto-published</span>
+          </div>
+        </div>
 
-        <ModerationStatCard
-          label="Total Moderated"
-          value={totalModerated}
-          description="All reviewed content"
-          icon={Activity}
-        />
+        {/* Moderate Risk */}
+        <div className="bg-white p-5 rounded-xl border border-amber-100 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-amber-600">Moderate Risk (40ΓÇô69)</span>
+            <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-amber-700">{stats.moderateRisk}</span>
+            <span className="text-xs font-medium text-amber-600">Requires Admin Review</span>
+          </div>
+        </div>
 
-        <ModerationStatCard
-          label="Safe Content"
-          value={safeCount}
-          description={`${safePercentage}% of content`}
-          icon={CheckCircle2}
-          iconClass="text-emerald-600"
-        />
-
-        <ModerationStatCard
-          label="Needs Review"
-          value={reviewCount}
-          description={`${reviewPercentage}% of content`}
-          icon={Clock3}
-          iconClass="text-amber-600"
-        />
-
-        <ModerationStatCard
-          label="Blocked"
-          value={blockedCount}
-          description={`${blockedPercentage}% of content`}
-          icon={Ban}
-          iconClass="text-rose-600"
-        />
-
-        <ModerationStatCard
-          label="Reports"
-          value={reportedCount}
-          description="Reported content"
-          icon={Flag}
-          iconClass="text-purple-600"
-        />
-
+        {/* High Risk */}
+        <div className="bg-white p-5 rounded-xl border border-rose-100 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-rose-600">High Risk (70ΓÇô100)</span>
+            <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-rose-700">{stats.highRisk}</span>
+            <span className="text-xs font-medium text-rose-600">Blocked Immediately</span>
+          </div>
+        </div>
       </div>
 
-      {/* SUMMARY */}
-
-      <div className="grid lg:grid-cols-2 gap-5">
-
-        {/* MODERATION SUMMARY */}
-
-        <div className="bg-white border border-[#EDE8DF] rounded-3xl p-6">
-
-          <div className="flex items-center justify-between mb-5">
-
-            <div>
-              <h3 className="font-serif text-lg font-bold text-stone-900">
-                Moderation Summary
-              </h3>
-
-              <p className="text-[11px] text-stone-500 mt-1">
-                Current distribution of moderated content.
-              </p>
-            </div>
-
-            <BarChart3 className="w-5 h-5 text-stone-400" />
-
-          </div>
-
-          <ModerationProgress
-            label="Safe Content"
-            value={safeCount}
-            total={totalModerated}
-            percentage={safePercentage}
-            barClass="bg-emerald-500"
-            valueClass="text-emerald-600"
-          />
-
-          <ModerationProgress
-            label="Needs Review"
-            value={reviewCount}
-            total={totalModerated}
-            percentage={reviewPercentage}
-            barClass="bg-amber-500"
-            valueClass="text-amber-600"
-          />
-
-          <ModerationProgress
-            label="Blocked"
-            value={blockedCount}
-            total={totalModerated}
-            percentage={blockedPercentage}
-            barClass="bg-rose-500"
-            valueClass="text-rose-600"
-          />
-
+      {/* Control Bar: Filters & Search */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
+        {/* Risk Level Tabs */}
+        <div className="flex flex-wrap gap-1.5 p-1 bg-slate-100 rounded-lg">
+          {[
+            { id: 'all', label: 'All Content' },
+            { id: 'low', label: '≡ƒƒó Low' },
+            { id: 'moderate', label: '≡ƒƒí Moderate' },
+            { id: 'high', label: '≡ƒö┤ High' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setLevelFilter(tab.id)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                levelFilter === tab.id
+                  ? 'bg-white text-slate-800 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        {/* REPORT SUMMARY */}
-
-        <div className="bg-white border border-[#EDE8DF] rounded-3xl p-6">
-
-          <div className="flex items-center justify-between mb-5">
-
-            <div>
-              <h3 className="font-serif text-lg font-bold text-stone-900">
-                Report Summary
-              </h3>
-
-              <p className="text-[11px] text-stone-500 mt-1">
-                Content requiring administrative attention.
-              </p>
-            </div>
-
-            <Flag className="w-5 h-5 text-stone-400" />
-
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-
-            <SummaryBox
-              label="Reported"
-              value={reportedCount}
-              icon={Flag}
-              className="text-purple-700 bg-purple-50 border-purple-100"
-            />
-
-            <SummaryBox
-              label="Needs Review"
-              value={reviewCount}
-              icon={AlertTriangle}
-              className="text-amber-700 bg-amber-50 border-amber-100"
-            />
-
-            <SummaryBox
-              label="High Risk"
-              value={
-                items.filter(
-                  (item) => item.riskScore >= 70
-                ).length
-              }
-              icon={ShieldCheck}
-              className="text-rose-700 bg-rose-50 border-rose-100"
-            />
-
-            <SummaryBox
-              label="Safe"
-              value={safeCount}
-              icon={CheckCircle2}
-              className="text-emerald-700 bg-emerald-50 border-emerald-100"
-            />
-
-          </div>
-
-          <button
-            onClick={() => {
-              document.getElementById('reports-section') ?.scrollIntoView({behavior: 'smooth',});
-            }}
-            className="w-full mt-4 px-4 py-2.5 bg-[#FAF7F2] hover:bg-[#F3EEE5] border border-[#EDE8DF] rounded-xl text-xs font-semibold text-[#1A382B] transition"
-          >
-            View Reported Content
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* MODERATION QUEUE */}
-
-      <div className="bg-white border border-[#EDE8DF] rounded-3xl p-5 sm:p-7">
-
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-
-          <div>
-
-            <h3 className="font-serif text-xl font-bold text-stone-900">
-              Moderation Queue
-            </h3>
-
-            <p className="text-[11px] text-stone-500 mt-1">
-              Review content based on risk scores and reports.
-            </p>
-
-          </div>
-
-          <div className="text-xs text-stone-500">
-            {filteredItems.length} item
-            {filteredItems.length !== 1 ? 's' : ''}
-          </div>
-
-        </div>
-
-        {/* FILTERS */}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mb-6">
-
-          <div className="relative xl:col-span-2">
-
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-stone-400" />
-
-            <input
-              value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
-              placeholder="Search content or author..."
-              className="w-full pl-9 pr-3 py-2.5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-xl text-xs focus:outline-none focus:border-[#1A382B]"
-            />
-
-          </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value)
-            }
-            className="px-3 py-2.5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-xl text-xs focus:outline-none"
-          >
-            <option value="all">All Statuses</option>
-            <option value="safe">Safe</option>
-            <option value="review">Needs Review</option>
-            <option value="blocked">Blocked</option>
-          </select>
-
-          <select
-            value={riskFilter}
-            onChange={(e) =>
-              setRiskFilter(e.target.value)
-            }
-            className="px-3 py-2.5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-xl text-xs focus:outline-none"
-          >
-            <option value="all">All Risk Levels</option>
-            <option value="low">Low Risk</option>
-            <option value="medium">Medium Risk</option>
-            <option value="high">High Risk</option>
-          </select>
-
+        {/* Type Filter & Search */}
+        <div className="flex flex-col sm:flex-row gap-3">
           <select
             value={typeFilter}
-            onChange={(e) =>
-              setTypeFilter(e.target.value)
-            }
-            className="px-3 py-2.5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-xl text-xs focus:outline-none"
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="px-3 py-2 text-xs font-medium rounded-lg border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="all">All Types</option>
-            <option value="Article">Articles</option>
-            <option value="Quiz">Quizzes</option>
+            <option value="article">Articles Only</option>
+            <option value="quiz">Quizzes Only</option>
           </select>
 
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 mb-5">
-
-          <button
-            onClick={() =>
-              setShowReportsOnly(!showReportsOnly)
-            }
-            className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition ${
-              showReportsOnly
-                ? 'bg-purple-50 border-purple-200 text-purple-800'
-                : 'bg-white border-[#EDE8DF] text-stone-600 hover:bg-[#FAF7F2]'
-            }`}
-          >
-            <Flag className="w-3.5 h-3.5" />
-            Reported Only
-          </button>
-
-          <button
-            onClick={resetFilters}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-stone-500 hover:text-stone-900 hover:bg-[#FAF7F2]"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Reset
-          </button>
-
-        </div>
-
-        {/* TABLE */}
-
-        {filteredItems.length === 0 ? (
-
-          <div className="py-12 text-center">
-
-            <ShieldCheck className="w-8 h-8 mx-auto text-stone-300 mb-3" />
-
-            <p className="text-sm font-semibold text-stone-600">
-              No moderation items found.
-            </p>
-
-            <p className="text-xs text-stone-400 mt-1">
-              Try changing your filters.
-            </p>
-
+          <div className="relative min-w-[220px]">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Search title, author, flags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700"
+            />
           </div>
+        </div>
+      </div>
 
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="py-16 text-center text-slate-400">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-indigo-500" />
+            <p className="text-sm font-medium">Scanning & loading content items...</p>
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="py-16 text-center text-slate-400">
+            <ShieldCheck className="w-10 h-10 mx-auto mb-3 text-slate-300" />
+            <p className="text-sm font-medium text-slate-600">No items match the current filter.</p>
+            <p className="text-xs text-slate-400 mt-1">Try selecting another risk level or clearing your search.</p>
+          </div>
         ) : (
-
           <div className="overflow-x-auto">
-
-            <table className="w-full text-left text-xs">
-
-              <thead>
-
-                <tr className="border-b border-[#F5F2EB] text-stone-500">
-
-                  <th className="pb-3 pl-2">
-                    Content
-                  </th>
-
-                  <th className="pb-3">
-                    Type
-                  </th>
-
-                  <th className="pb-3">
-                    Risk Score
-                  </th>
-
-                  <th className="pb-3">
-                    Status
-                  </th>
-
-                  <th className="pb-3">
-                    Report
-                  </th>
-
-                  <th className="pb-3 text-right">
-                    Action
-                  </th>
-
+            <table className="w-full text-left text-sm text-slate-600">
+              <thead className="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold tracking-wider border-b border-slate-200">
+                <tr>
+                  <th className="px-5 py-3">Content Title</th>
+                  <th className="px-4 py-3">Author</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Risk Level</th>
+                  <th className="px-4 py-3">AI Score</th>
+                  <th className="px-4 py-3">Detected Flags</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
-
               </thead>
-
-              <tbody className="divide-y divide-[#F5F2EB]">
-
-                {filteredItems.map((item) => (
-
-                  <tr
-                    key={item.id}
-                    className="hover:bg-[#FAF7F2]/60"
-                  >
-
-                    <td className="py-4 pl-2">
-
-                      <div className="max-w-xs">
-
-                        <span className="block font-bold text-stone-900 line-clamp-1">
+              <tbody className="divide-y divide-slate-100">
+                {filteredItems.map((item) => {
+                  const mod = item.aiModeration || {};
+                  return (
+                    <tr key={`${item.type}-${item._id}`} className="hover:bg-slate-50/75 transition-colors">
+                      {/* Title */}
+                      <td className="px-5 py-3.5">
+                        <div className="font-medium text-slate-900 max-w-[240px] truncate" title={item.title}>
                           {item.title}
-                        </span>
+                        </div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </div>
+                      </td>
 
-                        <span className="block text-[10px] text-stone-400 mt-1">
-                          {item.author}
-                        </span>
-
-                      </div>
-
-                    </td>
-
-                    <td className="py-4">
-
-                      <div className="inline-flex items-center gap-1.5 text-stone-600">
-
-                        {item.type === 'Article' ? (
-                          <FileText className="w-3.5 h-3.5" />
-                        ) : (
-                          <BookOpen className="w-3.5 h-3.5" />
+                      {/* Author */}
+                      <td className="px-4 py-3.5">
+                        <div className="text-xs font-medium text-slate-800">{item.author}</div>
+                        {item.authorEmail && (
+                          <div className="text-[11px] text-slate-400 truncate max-w-[150px]">{item.authorEmail}</div>
                         )}
+                      </td>
 
-                        {item.type}
+                      {/* Type */}
+                      <td className="px-4 py-3.5">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                            item.type === 'article'
+                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                              : 'bg-purple-50 text-purple-700 border border-purple-200'
+                          }`}
+                        >
+                          {item.type}
+                        </span>
+                      </td>
 
-                      </div>
+                      {/* Risk Level Badge */}
+                      <td className="px-4 py-3.5">{getRiskBadge(mod.level, mod.score)}</td>
 
-                    </td>
+                      {/* AI Score Bar */}
+                      <td className="px-4 py-3.5">{getScoreBar(mod.score, mod.level)}</td>
 
-                    <td className="py-4">
-
-                      <div className="min-w-[120px]">
-
-                        <div className="flex items-center justify-between mb-1">
-
-                          <span className="font-bold text-stone-800">
-                            {item.riskScore}
-                          </span>
-
-                          <span
-                            className={`text-[9px] font-bold`}
-                          >
-                            {getRiskLabel(
-                              item.riskScore
+                      {/* Detected Flags */}
+                      <td className="px-4 py-3.5">
+                        {mod.flags && mod.flags.length > 0 ? (
+                          <div className="flex flex-wrap gap-1 max-w-[160px]">
+                            {mod.flags.slice(0, 2).map((flag, idx) => (
+                              <span
+                                key={idx}
+                                className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-rose-50 text-rose-600 border border-rose-200"
+                              >
+                                {flag}
+                              </span>
+                            ))}
+                            {mod.flags.length > 2 && (
+                              <span className="text-[10px] text-slate-400">+{mod.flags.length - 2}</span>
                             )}
-                          </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic">None</span>
+                        )}
+                      </td>
 
-                        </div>
-
-                        <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
-
-                          <div
-                            className={`h-full rounded-full ${getRiskBarStyle(
-                              item.riskScore
-                            )}`}
-                            style={{
-                              width: `${item.riskScore}%`,
-                            }}
-                          />
-
-                        </div>
-
-                      </div>
-
-                    </td>
-
-                    <td className="py-4">
-
-                      <span
-                        className={`inline-flex px-2 py-1 rounded-lg border text-[9px] font-bold uppercase tracking-wide ${getStatusStyle(
-                          item.status
-                        )}`}
-                      >
-                        {getStatusLabel(item.status)}
-                      </span>
-
-                    </td>
-
-                    <td className="py-4">
-
-                      {item.reported ? (
-
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-50 text-purple-800 border border-purple-200 text-[9px] font-bold">
-                          <Flag className="w-3 h-3" />
-                          Reported
+                      {/* Status */}
+                      <td className="px-4 py-3.5">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${
+                            item.status === 'published' || item.status === 'approved'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : item.status === 'rejected'
+                              ? 'bg-rose-50 text-rose-700'
+                              : 'bg-amber-50 text-amber-700'
+                          }`}
+                        >
+                          {item.status}
                         </span>
+                      </td>
 
-                      ) : (
-
-                        <span className="text-stone-400 text-[10px]">
-                          None
-                        </span>
-
-                      )}
-
-                    </td>
-
-                    <td className="py-4 text-right">
-
-                      <button
-                        onClick={() =>
-                          setSelectedItem(item)
-                        }
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-stone-600 hover:text-[#1A382B] hover:bg-[#FAF7F2] font-semibold"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        View
-                      </button>
-
-                    </td>
-
-                  </tr>
-
-                ))}
-
+                      {/* Actions */}
+                      <td className="px-5 py-3.5 text-right space-x-2">
+                        <button
+                          onClick={() => setSelectedItem(item)}
+                          className="px-2.5 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg border border-indigo-200 transition-colors"
+                          title="View Details"
+                        >
+                          Details
+                        </button>
+                        <button
+                          onClick={() => handleRescan(item.type, item._id)}
+                          disabled={rescanningId === item._id}
+                          className="px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors disabled:opacity-50"
+                          title="Re-run AI scan"
+                        >
+                          {rescanningId === item._id ? (
+                            <RefreshCw className="w-3 h-3 animate-spin inline" />
+                          ) : (
+                            'Re-scan'
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
-
             </table>
-
           </div>
-
         )}
-
       </div>
 
       {/* USER REPORTS */}
@@ -1036,7 +628,6 @@ const updateReportStatus = async (reportId, status) => {
         id="reports-section"
         className="bg-white border border-[#EDE8DF] rounded-3xl p-5 sm:p-7"
       >
-
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
 
           <div>
@@ -1073,219 +664,221 @@ const updateReportStatus = async (reportId, status) => {
             </button>
 
           </div>
-
         </div>
 
         {/* REPORT SUMMARY */}
 
         <div className="grid grid-cols-3 gap-3 mb-6">
 
-          <SummaryBox
-            label="Pending"
-            value={pendingReports}
-            icon={Clock3}
-            className="text-amber-700 bg-amber-50 border-amber-100"
-          />
+          <div className="border border-amber-100 bg-amber-50 rounded-2xl p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+              Pending
+            </p>
 
-          <SummaryBox
-            label="Resolved"
-            value={resolvedReports}
-            icon={CheckCircle2}
-            className="text-emerald-700 bg-emerald-50 border-emerald-100"
-          />
+            <p className="text-2xl font-bold text-amber-800 mt-2">
+              {pendingReports}
+            </p>
+          </div>
 
-          <SummaryBox
-            label="Dismissed"
-            value={dismissedReports}
-            icon={XCircle}
-            className="text-stone-600 bg-stone-50 border-stone-200"
-          />
+          <div className="border border-emerald-100 bg-emerald-50 rounded-2xl p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+              Resolved
+            </p>
+
+            <p className="text-2xl font-bold text-emerald-800 mt-2">
+              {resolvedReports}
+            </p>
+          </div>
+
+          <div className="border border-stone-200 bg-stone-50 rounded-2xl p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-600">
+              Dismissed
+            </p>
+
+            <p className="text-2xl font-bold text-stone-700 mt-2">
+              {dismissedReports}
+            </p>
+          </div>
 
         </div>
 
-        {/* ERROR */}
+        {/* REPORT TABLE */}
 
-        {reportsError && (
-          <div className="mb-5 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800">
-            {reportsError}
-          </div>
-        )}
+        <div className="border border-[#EDE8DF] rounded-2xl overflow-hidden">
 
-        {/* LOADING */}
+          {reportsLoading ? (
+            <div className="py-12 text-center text-stone-500">
+              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
+              <p className="text-sm">Loading reports...</p>
+            </div>
 
-        {reportsLoading ? (
+          ) : reportsError ? (
+            <div className="py-12 text-center text-rose-500">
+              <XCircle className="w-6 h-6 mx-auto mb-2" />
+              <p className="text-sm">{reportsError}</p>
+            </div>
 
-          <div className="py-12 text-center">
-
-            <RefreshCw className="w-7 h-7 mx-auto text-stone-300 animate-spin mb-3" />
-
-            <p className="text-xs text-stone-500">
-              Loading reports...
-            </p>
-
-          </div>
-
-        ) : ((() => {
-          const filteredReports =
-          reportFilter === 'all'
-          ? reports
-          : reports.filter(
+          ) : reports.filter(
             (report) =>
+              reportFilter === 'all' ||
               report.status === reportFilter
-          );
+          ).length === 0 ? (
 
-          if (filteredReports.length === 0) {
-            return (
-              <div className="py-12 text-center">
+            <div className="py-12 text-center text-stone-400">
+              <Info className="w-8 h-8 mx-auto mb-2 text-stone-300" />
+              <p className="text-sm font-medium">
+                No reports found.
+              </p>
+              <p className="text-xs mt-1">
+                There are no reports matching the selected filter.
+              </p>
+            </div>
 
-                <Flag className="w-8 h-8 mx-auto text-stone-300 mb-3" />
+          ) : (
 
-                <p className="text-sm font-semibold text-stone-600">
-                  No reports found.
-                </p>
-
-                <p className="text-xs text-stone-400 mt-1">
-                  There are no reports matching the selected filter.
-                </p>
-
-              </div>
-            );
-          }
-
-          return (
             <div className="overflow-x-auto">
 
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left">
 
-                <thead>
+                <thead className="bg-[#FAF7F2] border-b border-[#EDE8DF]">
+                  <tr>
 
-                  <tr className="border-b border-[#F5F2EB] text-stone-500">
-
-                    <th className="pb-3 pl-2">
-                      Report
-                    </th>
-
-                    <th className="pb-3">
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
                       Type
                     </th>
 
-                    <th className="pb-3">
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
+                      Reported Item
+                    </th>
+
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
+                      Reason
+                    </th> 
+
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
                       Reported By
                     </th>
 
-                    <th className="pb-3">
-                      Reason
-                    </th>
-
-                    <th className="pb-3">
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500">
                       Status
                     </th>
 
-                    <th className="pb-3 text-right">
+                    <th className="px-5 py-3 text-[10px] font-semibold uppercase tracking-wider text-stone-500 text-right">
                       Action
                     </th>
 
                   </tr>
-
                 </thead>
 
-                <tbody className="divide-y divide-[#F5F2EB]">
+                <tbody className="divide-y divide-[#EDE8DF]">
 
-                  {filteredReports.map((report) => (
+                  {reports
+                    .filter(
+                      (report) =>
+                        reportFilter === 'all' ||
+                        report.status === reportFilter
+                    )
+                  .map((report) => (
 
                     <tr
                       key={report._id}
-                      className="hover:bg-[#FAF7F2]/60"
+                      className="hover:bg-[#FAF7F2] transition-colors"
                     >
 
-                      <td className="py-4 pl-2">
-
-                        <div className="max-w-xs">
-
-                          <span className="block font-bold text-stone-900 line-clamp-1">
-                            {report.item}
-                          </span>
-
-                          {report.description && (
-                            <span className="block text-[10px] text-stone-400 mt-1 line-clamp-1">
-                              {report.description}
-                            </span>
-                          )}
-
-                        </div>
-
-                      </td>
-
-                      <td className="py-4">
-                        <span className="inline-flex items-center gap-1.5 text-stone-600">
-                          {report.type === 'Article' ? (
-                            <FileText className="w-3.5 h-3.5" />
-                          ) : (
-                            <Flag className="w-3.5 h-3.5" />
-                          )}
-                          {report.type}
+                      {/* Type */}
+                      <td className="px-5 py-4">
+                        <span className="inline-flex px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-semibold">
+                          {report.type || 'Other'}
                         </span>
                       </td>
 
-                      <td className="py-4">
-                        <span className="text-stone-700 font-medium">
-                          {report.reportedBy}
+                      {/* Item */}
+                      <td className="px-5 py-4">
+                        <p className="text-xs font-semibold text-stone-800 max-w-[220px] truncate">
+                          {report.item || 'Unknown item'}
+                        </p>
+
+                        {report.description && (
+                          <p className="text-[10px] text-stone-400 mt-1 max-w-[220px] truncate">
+                            {report.description}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Reason */}
+                      <td className="px-5 py-4">
+                        <span className="text-xs text-stone-700">
+                          {report.reason || 'No reason provided'}
                         </span>
                       </td>
 
-                      <td className="py-4">
-                        <span className="text-stone-600">
-                          {report.reason}
-                        </span>
+                      {/* Reported By */}
+                      <td className="px-5 py-4">
+                        <p className="text-xs font-medium text-stone-800">
+                          {report.reportedBy || 'Unknown'}
+                        </p>
+
+                        {report.reporterId && (
+                          <p className="text-[10px] text-stone-400 mt-1">
+                            User ID: {report.reporterId}
+                          </p>
+                        )}
                       </td>
 
-                      <td className="py-4">
+                      {/* Status */}
+                      <td className="px-5 py-4">
+
                         <span
-                          className={`inline-flex px-2 py-1 rounded-lg border text-[9px] font-bold uppercase tracking-wide ${
+                          className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-semibold capitalize ${
                             report.status === 'pending'
-                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-100'
                               : report.status === 'resolved'
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                              : 'bg-stone-100 text-stone-600 border-stone-200'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                              : 'bg-stone-100 text-stone-600 border border-stone-200'
                           }`}
                         >
                           {report.status}
                         </span>
+
                       </td>
 
-                      <td className="py-4 text-right">
+                      {/* Action */}
+                      <td className="px-5 py-4 text-right">
 
-                        <div className="inline-flex items-center gap-2">
-                          {report.status === 'pending' && (
-                            <>
-                              <button
-                                onClick={() =>
-                                  updateReportStatus(
-                                    report._id,
-                                    'resolved'
-                                  )
-                                }
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold hover:bg-emerald-100"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                                Resolve
-                              </button>
+                        <div className="flex justify-end gap-2">
 
-                              <button
-                                onClick={() =>
-                                  updateReportStatus(
-                                    report._id,
-                                    'dismissed'
-                                  )
-                                }
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-700 font-semibold hover:bg-stone-100"
-                              >
-                                <XCircle className="w-3.5 h-3.5" />
-                                Dismiss
-                              </button>
-                            </>    
+                          {report.status !== 'resolved' && (
+                            <button
+                              onClick={() =>
+                                updateReportStatus(
+                                  report._id,
+                                  'resolved'
+                                )
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-semibold hover:bg-emerald-100 transition-colors"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Resolve
+                            </button>
                           )}
+
+                          {report.status !== 'dismissed' && (
+                            <button
+                              onClick={() =>
+                                updateReportStatus(
+                                  report._id,
+                                  'dismissed'
+                                )
+                              }
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-50 text-stone-600 border border-stone-200 text-[10px] font-semibold hover:bg-stone-100 transition-colors"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              Dismiss
+                            </button>
+                          )}
+
                         </div>
+
                       </td>
 
                     </tr>
@@ -1297,465 +890,115 @@ const updateReportStatus = async (reportId, status) => {
               </table>
 
             </div>
-          );
-
-        })()
-        )}
-
-      </div>
-
-      {/* RECENT MODERATION ACTIVITY */}
-
-      <div className="bg-white border border-[#EDE8DF] rounded-3xl p-6">
-
-        <div className="flex items-center justify-between mb-5">
-
-          <div>
-
-            <h3 className="font-serif text-lg font-bold text-stone-900">
-              Recent Moderation Activity
-            </h3>
-
-            <p className="text-[11px] text-stone-500 mt-1">
-              Latest moderation actions on the platform.
-            </p>
-
-          </div>
-
-          <Activity className="w-5 h-5 text-stone-400" />
+          )}
 
         </div>
-
-        <div className="space-y-1">
-
-          {activities.slice(0, 6).map((activity) => (
-
-            <div
-              key={activity.id}
-              className="flex items-center gap-3 py-3 border-b border-[#F5F2EB] last:border-0"
-            >
-
-              <ActivityIcon type={activity.type} />
-
-              <div className="flex-1 min-w-0">
-
-                <p className="text-xs font-semibold text-stone-800">
-                  {activity.text}
-                </p>
-
-                <p className="text-[10px] text-stone-400 mt-0.5">
-                  {activity.user}
-                </p>
-
-              </div>
-
-              <span className="text-[10px] text-stone-400">
-                {activity.time}
-              </span>
-
-            </div>
-
-          ))}
-
-        </div>
-
       </div>
 
-      {/* VIEW / REVIEW MODAL */}
-
+      {/* Details Modal */}
       {selectedItem && (
-
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-
-          <div className="bg-white border border-[#EDE8DF] rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
-
-            {/* MODAL HEADER */}
-
-            <div className="shrink-0 bg-white border-b border-[#EDE8DF] px-6 py-4 flex items-center justify-between">
-
-              <div>
-
-                <span className="text-[10px] uppercase tracking-wider text-stone-400 font-bold">
-                  {selectedItem.type}
-                </span>
-
-                <h3 className="font-serif text-xl font-bold text-stone-900">
-                  {selectedItem.title}
-                </h3>
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 p-6 space-y-5 animate-in fade-in zoom-in duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2">
+                <Bot className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-bold text-slate-900 text-lg">AI Moderation Report</h3>
               </div>
-
               <button
-                onClick={() =>
-                  setSelectedItem(null)
-                }
-                className="text-stone-400 hover:text-stone-700"
+                onClick={() => setSelectedItem(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
               >
-                <XCircle className="w-5 h-5" />
+                Γ£ò
               </button>
-
             </div>
 
-            {/* MODAL CONTENT */}
-
-            <div className="p-6 space-y-5 overflow-y-auto">
-
-              <div className="grid sm:grid-cols-3 gap-3">
-
-                <ModerationInfoBox
-                  label="Author"
-                  value={selectedItem.author}
-                />
-
-                <ModerationInfoBox
-                  label="Risk Score"
-                  value={`${selectedItem.riskScore} / 100`}
-                />
-
-                <ModerationInfoBox
-                  label="Status"
-                  value={getStatusLabel(
-                    selectedItem.status
-                  )}
-                />
-
+            {/* Modal Content */}
+            <div className="space-y-4">
+              <div>
+                <span className="text-xs text-slate-400 uppercase font-semibold">Title</span>
+                <p className="font-semibold text-slate-800 text-base">{selectedItem.title}</p>
               </div>
 
-              {/* RISK SCORE */}
-
-              <div className="bg-[#FAF7F2] border border-[#EDE8DF] rounded-2xl p-5">
-
-                <div className="flex items-center justify-between mb-2">
-
-                  <div>
-
-                    <h4 className="font-serif font-bold text-stone-900">
-                      Risk Assessment
-                    </h4>
-
-                    <p className="text-[10px] text-stone-500 mt-1">
-                      Current moderation risk score.
-                    </p>
-
-                  </div>
-
-                  <span
-                    className={`px-2.5 py-1 rounded-lg border text-[10px] font-bold ${getRiskStyle(
-                      selectedItem.riskScore
-                    )}`}
-                  >
-                    {getRiskLabel(
-                      selectedItem.riskScore
-                    )}
-                  </span>
-
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl">
+                <div>
+                  <span className="text-[11px] text-slate-400 uppercase font-semibold">Author</span>
+                  <p className="text-xs font-medium text-slate-700">{selectedItem.author}</p>
                 </div>
-
-                <div className="flex items-center gap-3 mt-4">
-
-                  <div className="flex-1 h-3 bg-white border border-[#EDE8DF] rounded-full overflow-hidden">
-
-                    <div
-                      className={`h-full rounded-full ${getRiskBarStyle(
-                        selectedItem.riskScore
-                      )}`}
-                      style={{
-                        width: `${selectedItem.riskScore}%`,
-                      }}
-                    />
-
-                  </div>
-
-                  <span className="font-serif font-bold text-stone-900">
-                    {selectedItem.riskScore}
-                  </span>
-
+                <div>
+                  <span className="text-[11px] text-slate-400 uppercase font-semibold">Content Type</span>
+                  <p className="text-xs font-medium capitalize text-slate-700">{selectedItem.type}</p>
                 </div>
-
+                <div>
+                  <span className="text-[11px] text-slate-400 uppercase font-semibold">Current Status</span>
+                  <p className="text-xs font-semibold capitalize text-slate-800">{selectedItem.status}</p>
+                </div>
+                <div>
+                  <span className="text-[11px] text-slate-400 uppercase font-semibold">Risk Level</span>
+                  <div className="mt-1">
+                    {getRiskBadge(selectedItem.aiModeration?.level, selectedItem.aiModeration?.score)}
+                  </div>
+                </div>
               </div>
-
-              {/* REPORT */}
 
               <div>
-
-                <h4 className="font-serif font-bold text-stone-900 mb-2">
-                  Moderation Details
-                </h4>
-
-                <div className="bg-white border border-[#EDE8DF] rounded-2xl p-4">
-
-                  <div className="flex items-start gap-3">
-
-                    <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
-
-                      <AlertTriangle className="w-4 h-4 text-amber-700" />
-
-                    </div>
-
-                    <div>
-
-                      <p className="text-xs font-semibold text-stone-800">
-                        Review Reason
-                      </p>
-
-                      <p className="text-xs text-stone-500 mt-1">
-                        {selectedItem.reason}
-                      </p>
-
-                    </div>
-
-                  </div>
-
+                <span className="text-xs text-slate-400 uppercase font-semibold">AI Risk Score</span>
+                <div className="mt-1">
+                  {getScoreBar(selectedItem.aiModeration?.score, selectedItem.aiModeration?.level)}
                 </div>
-
               </div>
 
-              {/* REPORT STATUS */}
-
-              <div className="flex items-center justify-between p-4 bg-[#FAF7F2] border border-[#EDE8DF] rounded-2xl">
-
-                <div className="flex items-center gap-3">
-
-                  <Flag className="w-4 h-4 text-purple-600" />
-
-                  <div>
-
-                    <p className="text-xs font-semibold text-stone-800">
-                      User Report
-                    </p>
-
-                    <p className="text-[10px] text-stone-500 mt-0.5">
-                      {selectedItem.reported
-                        ? 'This content has been reported.'
-                        : 'No active user report.'}
-                    </p>
-
-                  </div>
-
+              <div>
+                <span className="text-xs text-slate-400 uppercase font-semibold">Detected Violations / Flags</span>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {selectedItem.aiModeration?.flags?.length > 0 ? (
+                    selectedItem.aiModeration.flags.map((flag, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2 py-0.5 text-xs font-medium rounded-full bg-rose-50 text-rose-600 border border-rose-200"
+                      >
+                        {flag}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">No violation flags detected.</span>
+                  )}
                 </div>
-
-                <span
-                  className={`text-[10px] font-bold ${
-                    selectedItem.reported
-                      ? 'text-purple-700'
-                      : 'text-stone-400'
-                  }`}
-                >
-                  {selectedItem.reported
-                    ? 'REPORTED'
-                    : 'NONE'}
-                </span>
-
               </div>
 
+              <div>
+                <span className="text-xs text-slate-400 uppercase font-semibold">AI Explanation & Rationale</span>
+                <p className="mt-1 text-xs text-slate-600 p-3 bg-slate-50 rounded-xl border border-slate-100 leading-relaxed">
+                  {selectedItem.aiModeration?.reason || 'No detailed rationale recorded.'}
+                </p>
+              </div>
+
+              {selectedItem.aiModeration?.checkedAt && (
+                <div className="text-[11px] text-slate-400">
+                  Last scanned: {new Date(selectedItem.aiModeration.checkedAt).toLocaleString()}
+                </div>
+              )}
             </div>
 
-            {/* MODAL ACTIONS */}
-
-            <div className="shrink-0 border-t border-[#EDE8DF] px-6 py-4 flex flex-col sm:flex-row justify-end gap-2">
-
+            {/* Modal Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
               <button
-                onClick={() =>
-                  setSelectedItem(null)
-                }
-                className="px-4 py-2.5 text-xs font-semibold text-stone-600 hover:text-stone-900"
+                onClick={() => handleRescan(selectedItem.type, selectedItem._id)}
+                disabled={rescanningId === selectedItem._id}
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+              >
+                {rescanningId === selectedItem._id ? 'Re-scanning...' : 'Re-scan with AI'}
+              </button>
+              <button
+                onClick={() => setSelectedItem(null)}
+                className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors shadow-sm"
               >
                 Close
               </button>
-
-              {selectedItem.status !== 'blocked' && (
-
-                <button
-                  onClick={() =>
-                    updateModerationStatus(
-                      selectedItem.id,
-                      'blocked'
-                    )
-                  }
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 text-xs font-bold"
-                >
-                  <Ban className="w-4 h-4" />
-                  Block
-                </button>
-
-              )}
-
-              {selectedItem.status !== 'safe' && (
-
-                <button
-                  onClick={() =>
-                    updateModerationStatus(
-                      selectedItem.id,
-                      'safe'
-                    )
-                  }
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold"
-                >
-                  <Check className="w-4 h-4" />
-                  Approve
-                </button>
-
-              )}
-
             </div>
-
           </div>
-
         </div>
-
       )}
-
-    </div>
-  );
-};
-
-// ==========================================
-// SMALL COMPONENTS
-// ==========================================
-
-const ModerationStatCard = ({
-  label,
-  value,
-  description,
-  icon: Icon,
-  iconClass = 'text-stone-400',
-}) => (
-  <div className="bg-white border border-[#EDE8DF] rounded-3xl p-5">
-
-    <div className="flex items-center justify-between">
-
-      <span className="text-xs font-medium text-stone-500">
-        {label}
-      </span>
-
-      <Icon className={`w-4 h-4 ${iconClass}`} />
-
-    </div>
-
-    <p className="font-serif text-2xl font-bold text-stone-900 mt-2">
-      {value}
-    </p>
-
-    <span className="text-[10px] text-stone-400">
-      {description}
-    </span>
-
-  </div>
-);
-
-const ModerationProgress = ({
-  label,
-  value,
-  total,
-  percentage,
-  barClass,
-  valueClass,
-}) => (
-  <div className="mb-5 last:mb-0">
-
-    <div className="flex items-center justify-between mb-2">
-
-      <span className="text-xs font-semibold text-stone-700">
-        {label}
-      </span>
-
-      <span className={`text-xs font-bold ${valueClass}`}>
-        {value}
-      </span>
-
-    </div>
-
-    <div className="h-2 bg-stone-100 rounded-full overflow-hidden">
-
-      <div
-        className={`h-full rounded-full ${barClass}`}
-        style={{
-          width: `${percentage}%`,
-        }}
-      />
-
-    </div>
-
-    <div className="text-[9px] text-stone-400 mt-1">
-      {percentage}% of moderated content
-    </div>
-
-  </div>
-);
-
-const SummaryBox = ({
-  label,
-  value,
-  icon: Icon,
-  className,
-}) => (
-  <div
-    className={`border rounded-2xl p-4 ${className}`}
-  >
-
-    <div className="flex items-center justify-between">
-
-      <span className="text-[10px] font-bold">
-        {label}
-      </span>
-
-      <Icon className="w-4 h-4" />
-
-    </div>
-
-    <p className="font-serif text-xl font-bold mt-2">
-      {value}
-    </p>
-
-  </div>
-);
-
-const ModerationInfoBox = ({
-  label,
-  value,
-}) => (
-  <div className="bg-[#FAF7F2] border border-[#EDE8DF] rounded-2xl p-3">
-
-    <span className="block text-[10px] text-stone-400 uppercase tracking-wider font-bold">
-      {label}
-    </span>
-
-    <span className="block text-xs font-semibold text-stone-800 mt-1">
-      {value}
-    </span>
-
-  </div>
-);
-
-const ActivityIcon = ({ type }) => {
-
-  if (type === 'approved') {
-    return (
-      <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
-        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-      </div>
-    );
-  }
-
-  if (type === 'blocked') {
-    return (
-      <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center">
-        <Ban className="w-4 h-4 text-rose-600" />
-      </div>
-    );
-  }
-
-  if (type === 'report') {
-    return (
-      <div className="w-8 h-8 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center">
-        <Flag className="w-4 h-4 text-purple-600" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
-      <AlertTriangle className="w-4 h-4 text-amber-600" />
     </div>
   );
 };
