@@ -86,6 +86,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const moderationRoutes = require('./routes/moderationRoutes');
 const spamAbuseRoutes = require('./routes/spamAbuseRouters');
+const trustRoutes = require('./routes/trustRoutes');
 
 // Authentication
 app.use('/api/auth', authRoutes);
@@ -128,6 +129,9 @@ app.use('/api/moderation', moderationRoutes);
 
 // Spam & Abuse Detection
 app.use('/api/spam-abuse', spamAbuseRoutes);
+
+// User Trust & Reputation
+app.use('/api/trust', trustRoutes);
 
 
 
