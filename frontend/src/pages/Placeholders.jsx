@@ -253,8 +253,9 @@ export const BrowsePage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
           {filteredArticles.map((article) => (
-            <div
+            <Link
               key={article._id}
+              to={`/browse/${article._id}`}
               className="bg-white border border-[#EDE8DF] rounded-3xl p-6 shadow-xs space-y-3 hover:border-stone-400 transition"
             >
 
@@ -296,7 +297,7 @@ export const BrowsePage = () => {
 
               </div>
 
-            </div>
+            </Link>
           ))}
 
         </div>

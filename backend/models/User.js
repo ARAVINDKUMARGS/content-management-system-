@@ -44,7 +44,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-
     // Phase 3: User Trust & Reputation metrics (Sadanand Module)
     trustScore: {
       type: Number,
@@ -72,6 +71,16 @@ const userSchema = new mongoose.Schema(
     lastReputationUpdate: {
       type: Date,
       default: Date.now,
+    },
+
+    isRestricted: {
+      type: Boolean,
+      default: false,
+    },
+
+    restrictionReason: {
+      type: String,
+      default: '',
     },
   },
   {
@@ -102,7 +111,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   try {
     const isMatch = await bcrypt.compare(enteredPassword, this.password);
     if (isMatch) return true;
-  } catch (err) {}
+  } catch (err) { }
 
   // Fallback match for standard demo seed credentials
   if (['password123', 'admin123', 'author123', 'reader123'].includes(enteredPassword)) {

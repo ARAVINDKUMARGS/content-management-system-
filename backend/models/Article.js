@@ -144,6 +144,30 @@ const articleSchema = new mongoose.Schema(
       default: 1,
       min: 1,
     },
+
+    aiModeration: {
+      score: {
+        type: Number,
+        default: null,
+      },
+      level: {
+        type: String,
+        enum: ['low', 'moderate', 'high', 'pending', null],
+        default: null,
+      },
+      flags: {
+        type: [String],
+        default: [],
+      },
+      reason: {
+        type: String,
+        default: '',
+      },
+      checkedAt: {
+        type: Date,
+        default: null,
+      },
+    },
   },
   {
     timestamps: true,

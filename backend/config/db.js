@@ -18,7 +18,20 @@ const connectDB = async () => {
       return null;
     }
 
-    const conn = await mongoose.connect(mongoURI, { dbName: 'content_management_system' });
+    const conn = await mongoose.connect(mongoURI, {
+      dbName: 'content_management_system',
+      // Force IPv4 — prevents NAT64 IPv6 (64:ff9b::) drops during long AI scans
+      family: 4,
+      // Keep connection alive during long-running AI scans
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 120000,
+      connectTimeoutMS: 30000,
+      heartbeatFrequencyMS: 10000,
+      maxIdleTimeMS: 120000,
+      // Connection pool — keeps connections warm
+      maxPoolSize: 10,
+      minPoolSize: 2,
+    });
 
     console.log(
       '[Lumen Database] Connected to MongoDB Atlas (cluster0.c6ksgra.mongodb.net)'
@@ -27,6 +40,15 @@ const connectDB = async () => {
     console.log(
       `[Lumen Database] Database Name: ${conn.connection.name}`
     );
+
+    // Reconnect on disconnect
+    mongoose.connection.on('disconnected', () => {
+      console.warn('[Lumen Database] MongoDB disconnected. Attempting reconnect...');
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('[Lumen Database] MongoDB reconnected ✅');
+    });
 
     return conn;
   } catch (error) {
