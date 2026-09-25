@@ -49,7 +49,6 @@ jobs:
           NODE_ENV: test
           JWT_SECRET: lumen_ci_test_secret_key_2026
           MONGODB_URI: mongodb://127.0.0.1:27017
-          FORCE_DB_TEST: true
 
       - name: Build Frontend Application
         run: npm --prefix frontend run build
