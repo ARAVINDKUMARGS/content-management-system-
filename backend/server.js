@@ -10,6 +10,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('./config/db');
+const contentQualityRoutes = require('./routes/contentQualityRoutes');
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '.env') });
@@ -117,6 +118,9 @@ app.use('/api/messages', messageRoutes);
 
 // Content Reports
 app.use('/api/reports', reportRoutes);
+
+// Content Quality & Duplicate Detection
+app.use('/api/content-quality', contentQualityRoutes);
 
 // AI Content Moderation
 app.use('/api/moderation', moderationRoutes);
@@ -227,4 +231,4 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-module.exports = app;
+module.exports = app;

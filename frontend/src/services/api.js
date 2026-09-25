@@ -303,6 +303,11 @@ export const QuizAPI = {
     QUIZ_API.delete(`/quizzes/${id}`),
 
 };
+export const contentQualityAPI = {
+  analyze: (data) =>
+    API.post('/content-quality/analyze', data),
+};
+
 
 // AI Content Moderation API
 export const moderationAPI = {

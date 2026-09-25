@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { articleAPI, quizAPI } from '../services/api';
+import {
+  articleAPI,
+  quizAPI,
+  contentQualityAPI,
+} from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import {
   ArrowLeft,
@@ -49,7 +53,10 @@ const WriteArticle = () => {
 
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-
+// Content Quality Analysis
+const [qualityLoading, setQualityLoading] = useState(false);
+const [qualityResult, setQualityResult] = useState(null);
+const [qualityError, setQualityError] = useState('');
   useEffect(() => {
     if (isEditMode) {
       fetchArticle();
@@ -199,6 +206,51 @@ const WriteArticle = () => {
 
     return true;
   };
+  const handleAnalyzeContent = async () => {
+  setQualityError('');
+  setQualityResult(null);
+
+  if (!title.trim() && !content.trim()) {
+    setQualityError(
+      'Please enter an article title or content before analyzing.'
+    );
+    return;
+  }
+
+  setQualityLoading(true);
+
+  try {
+    const response = await contentQualityAPI.analyze({
+      title: title.trim(),
+      description: '',
+      content: content.trim(),
+      category: category.trim(),
+      tags,
+      articleId: id || null,
+    });
+
+    if (response.data?.success) {
+      setQualityResult(response.data.analysis);
+    } else {
+      setQualityError(
+        response.data?.message ||
+          'Failed to analyze article content.'
+      );
+    }
+  } catch (error) {
+    console.error(
+      '[Content Quality Error]:',
+      error
+    );
+
+    setQualityError(
+      error.response?.data?.message ||
+        'Unable to analyze content. Please try again.'
+    );
+  } finally {
+    setQualityLoading(false);
+  }
+};
 
   const getArticleData = () => ({
     title: title.trim(),
@@ -498,7 +550,315 @@ const WriteArticle = () => {
             className="w-full px-4 py-3 bg-[#FAF7F2] border border-[#EDE8DF] rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#1A382B] disabled:opacity-60"
           />
         </div>
+{/* ------------------------------------------------ */}
+{/* Content Quality & Duplicate Detection */}
+{/* ------------------------------------------------ */}
+<div className="pt-6 border-t border-[#F5F2EB]">
+  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+    <div>
+      <div className="flex items-center gap-2">
+        <Sparkles className="w-5 h-5 text-[#D97736]" />
+        <h3 className="font-serif font-bold text-stone-900">
+          Content Quality & Duplicate Detection
+        </h3>
+      </div>
 
+      <p className="text-xs text-stone-500 mt-1">
+        Check grammar, readability, structure and similar published articles.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      onClick={handleAnalyzeContent}
+      disabled={
+        qualityLoading ||
+        isPendingReview ||
+        (!title.trim() && !content.trim())
+      }
+      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1A382B] hover:bg-[#11261D] text-white rounded-xl text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <Sparkles className="w-4 h-4" />
+
+      {qualityLoading
+        ? 'Analyzing...'
+        : 'Analyze Content'}
+    </button>
+  </div>
+
+  {/* Analysis Error */}
+  {qualityError && (
+    <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm flex items-center gap-2">
+      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+      {qualityError}
+    </div>
+  )}
+
+  {/* Analysis Result */}
+  {qualityResult && (
+    <div className="space-y-4">
+
+      {/* Overall Score */}
+      <div className="p-5 bg-[#FAF7F2] border border-[#EDE8DF] rounded-2xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-stone-500 uppercase tracking-wide">
+              Overall Quality Score
+            </p>
+
+            <p className="text-3xl font-bold text-[#1A382B] mt-1">
+              {qualityResult.score}/100
+            </p>
+          </div>
+
+          <div
+            className={`w-16 h-16 rounded-full border-4 flex items-center justify-center text-sm font-bold ${
+              qualityResult.score >= 80
+                ? 'border-emerald-500 text-emerald-700 bg-emerald-50'
+                : qualityResult.score >= 60
+                ? 'border-amber-500 text-amber-700 bg-amber-50'
+                : 'border-rose-500 text-rose-700 bg-rose-50'
+            }`}
+          >
+            {qualityResult.score}
+          </div>
+        </div>
+      </div>
+
+      {/* Quality Categories */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+        {/* Grammar */}
+        <div className="p-4 border border-[#EDE8DF] rounded-2xl bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-bold text-stone-900">
+              Grammar
+            </span>
+
+            {qualityResult.grammar?.issueCount === 0 ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+            )}
+          </div>
+
+          <p className="text-xs text-stone-500">
+            {qualityResult.grammar?.issueCount || 0} issue(s) detected
+          </p>
+        </div>
+
+        {/* Readability */}
+        <div className="p-4 border border-[#EDE8DF] rounded-2xl bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-bold text-stone-900">
+              Readability
+            </span>
+
+            <span className="text-sm font-bold text-[#1A382B]">
+              {qualityResult.readability?.score || 0}/100
+            </span>
+          </div>
+
+          <p className="text-xs text-stone-500">
+            {qualityResult.readability?.level || 'Not available'}
+          </p>
+
+          <p className="text-xs text-stone-400 mt-1">
+            {qualityResult.readability?.wordCount || 0} words ·{' '}
+            {qualityResult.readability?.sentenceCount || 0} sentences
+          </p>
+        </div>
+
+        {/* Structure */}
+        <div className="p-4 border border-[#EDE8DF] rounded-2xl bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-bold text-stone-900">
+              Structure
+            </span>
+
+            <span className="text-sm font-bold text-[#1A382B]">
+              {qualityResult.structure?.score || 0}/100
+            </span>
+          </div>
+
+          <p className="text-xs text-stone-500">
+            {qualityResult.structure?.checks?.filter(
+              (check) => check.passed
+            ).length || 0}{' '}
+            checks passed
+          </p>
+        </div>
+      </div>
+
+      {/* Grammar Issues */}
+      {qualityResult.grammar?.issues?.length > 0 && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+          <h4 className="text-sm font-bold text-amber-900 mb-3">
+            Grammar & Writing Issues
+          </h4>
+
+          <ul className="space-y-2">
+            {qualityResult.grammar.issues.map(
+              (issue, index) => (
+                <li
+                  key={index}
+                  className="text-xs text-amber-800 flex gap-2"
+                >
+                  <span>•</span>
+                  <span>{issue.message}</span>
+                </li>
+              )
+            )}
+          </ul>
+        </div>
+      )}
+
+      {/* Structure Checks */}
+      {qualityResult.structure?.checks?.length > 0 && (
+        <div className="p-4 border border-[#EDE8DF] rounded-2xl bg-white">
+          <h4 className="text-sm font-bold text-stone-900 mb-3">
+            Structure Checks
+          </h4>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {qualityResult.structure.checks.map(
+              (check, index) => (
+                <div
+                  key={index}
+                  className={`flex items-start gap-2 p-2.5 rounded-xl ${
+                    check.passed
+                      ? 'bg-emerald-50'
+                      : 'bg-amber-50'
+                  }`}
+                >
+                  {check.passed ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                  )}
+
+                  <div>
+                    <p className="text-xs font-semibold text-stone-800">
+                      {check.name}
+                    </p>
+
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      {check.message}
+                    </p>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Duplicate Detection */}
+      <div
+        className={`p-4 rounded-2xl border ${
+          qualityResult.duplicates?.duplicateDetected
+            ? 'bg-rose-50 border-rose-200'
+            : 'bg-emerald-50 border-emerald-200'
+        }`}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          {qualityResult.duplicates?.duplicateDetected ? (
+            <AlertCircle className="w-5 h-5 text-rose-600" />
+          ) : (
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+          )}
+
+          <h4
+            className={`text-sm font-bold ${
+              qualityResult.duplicates?.duplicateDetected
+                ? 'text-rose-900'
+                : 'text-emerald-900'
+            }`}
+          >
+            Duplicate Detection
+          </h4>
+        </div>
+
+        <p
+          className={`text-xs ${
+            qualityResult.duplicates?.duplicateDetected
+              ? 'text-rose-800'
+              : 'text-emerald-800'
+          }`}
+        >
+          {qualityResult.duplicates?.duplicateDetected
+            ? 'Highly similar published content was detected. Review the articles below before submitting.'
+            : 'No highly similar published article was detected.'}
+        </p>
+      </div>
+
+      {/* Similar Articles */}
+      {qualityResult.duplicates?.similarArticles?.length > 0 && (
+        <div className="p-4 border border-[#EDE8DF] rounded-2xl bg-white">
+          <h4 className="text-sm font-bold text-stone-900 mb-3">
+            Similar Articles
+          </h4>
+
+          <div className="space-y-2">
+            {qualityResult.duplicates.similarArticles.map(
+              (article, index) => (
+                <div
+                  key={article.articleId || index}
+                  className="flex items-center justify-between gap-3 p-3 bg-[#FAF7F2] rounded-xl"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-stone-800 truncate">
+                      {article.title}
+                    </p>
+
+                    {article.category && (
+                      <p className="text-xs text-stone-500 mt-1">
+                        {article.category}
+                      </p>
+                    )}
+                  </div>
+
+                  <span
+                    className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold ${
+                      article.similarity >= 80
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-amber-100 text-amber-700'
+                    }`}
+                  >
+                    {article.similarity}% similar
+                  </span>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Suggestions */}
+      {qualityResult.suggestions?.length > 0 && (
+        <div className="p-4 bg-[#F1EEE8] border border-[#E2DDD3] rounded-2xl">
+          <h4 className="text-sm font-bold text-stone-900 mb-3">
+            Suggestions
+          </h4>
+
+          <ul className="space-y-2">
+            {qualityResult.suggestions.map(
+              (suggestion, index) => (
+                <li
+                  key={index}
+                  className="text-xs text-stone-700 flex gap-2"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#D97736] flex-shrink-0 mt-0.5" />
+                  <span>{suggestion}</span>
+                </li>
+              )
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  )}
+</div>
         {/* ------------------------------------------------ */}
         {/* Toggle-Gated Quiz Builder */}
         {/* ------------------------------------------------ */}
