@@ -4,6 +4,7 @@ const Quiz = require('../models/Quiz');
 const User = require('../models/User');
 const articleStore = require('../models/articleStore');
 const { createNotification, notifyAuthorSubscribers } = require('./notificationController');
+const trustService = require('../services/trustService');
 
 // =====================================================
 // GET PENDING ARTICLES
@@ -142,11 +143,19 @@ const approveArticle = async (req, res) => {
           const authorUser = await User.findById(article.author);
           const authorName = authorUser ? authorUser.name : 'Subscribed Author';
 
+          const authorId = article.author._id || article.author.id || article.author;
+          try {
+            await trustService.handleArticleApproved(article._id, authorId, req.user?._id || req.user?.id);
+          } catch (trustErr) {
+            console.warn('[Trust] Failed to award reputation on article approval:', trustErr.message);
+          }
+
+
           await createNotification({
             user: article.author,
             sender: req.user._id,
             title: 'Article Published',
-            message: `Your article "${article.title}" has been approved and is live on Lumen!`,
+            message: `Your article "${article.title}" has been approved and is live on Lumen! (+10 Trust Score)`,
             type: 'article_status',
             link: `/browse/${article._id}`,
           });
@@ -172,6 +181,17 @@ const approveArticle = async (req, res) => {
     if (idx !== -1) {
       articleStore.inMemoryArticles[idx].status = 'published';
       articleStore.inMemoryArticles[idx].reviewFeedback = '';
+
+      const memAuthor = articleStore.inMemoryArticles[idx].author;
+      const memAuthorId = memAuthor?._id || memAuthor?.id || memAuthor;
+      if (memAuthorId) {
+        try {
+          await trustService.handleArticleApproved(id, memAuthorId, req.user?._id || req.user?.id);
+        } catch (trustErr) {
+          console.warn('[Trust] Failed to award reputation in memory store:', trustErr.message);
+        }
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Article approved and published successfully.',
@@ -215,11 +235,18 @@ const rejectArticle = async (req, res) => {
         await article.save();
 
         if (article.author) {
+          const authorId = article.author._id || article.author.id || article.author;
+          try {
+            await trustService.handleArticleRejectedViolation(article._id, authorId, reason.trim(), req.user?._id || req.user?.id);
+          } catch (trustErr) {
+            console.warn('[Trust] Failed to record penalty on article rejection:', trustErr.message);
+          }
+
           await createNotification({
             user: article.author,
             sender: req.user._id,
             title: 'Article Rejected',
-            message: `Your article "${article.title}" was rejected: "${reason.trim()}"`,
+            message: `Your article "${article.title}" was rejected: "${reason.trim()}" (-10 Trust Score)`,
             type: 'article_status',
             link: `/write/${article._id}`,
           });
@@ -237,6 +264,17 @@ const rejectArticle = async (req, res) => {
     if (idx !== -1) {
       articleStore.inMemoryArticles[idx].status = 'rejected';
       articleStore.inMemoryArticles[idx].reviewFeedback = reason.trim();
+
+      const memAuthor = articleStore.inMemoryArticles[idx].author;
+      const memAuthorId = memAuthor?._id || memAuthor?.id || memAuthor;
+      if (memAuthorId) {
+        try {
+          await trustService.handleArticleRejectedViolation(id, memAuthorId, reason.trim(), req.user?._id || req.user?.id);
+        } catch (trustErr) {
+          console.warn('[Trust] Failed to record penalty in memory store:', trustErr.message);
+        }
+      }
+
       return res.status(200).json({
         success: true,
         message: 'Article rejected successfully.',

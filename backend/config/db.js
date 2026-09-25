@@ -1,38 +1,36 @@
-const dns = require('dns');
-
-// Use Google DNS to resolve MongoDB Atlas SRV records.
-// This is required in environments where the default DNS
-// resolver cannot resolve the Atlas cluster correctly.
-dns.setServers(['8.8.8.8', '8.8.4.4']);
-
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const mongoURI =
-      process.env.MONGODB_URI || process.env.MONGO_URI;
+    const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
-    // Isolate tests from external database connections unless
-    // explicitly requested.
-    if (
-      process.env.NODE_ENV === 'test' &&
-      !process.env.FORCE_DB_TEST
-    ) {
+    // Isolate tests from external database connections unless explicitly requested
+    if (process.env.NODE_ENV === 'test' && !process.env.FORCE_DB_TEST) {
       return null;
     }
 
     if (!mongoURI) {
       if (process.env.NODE_ENV !== 'test') {
         console.warn(
-          '[Lumen Database] WARNING: MONGODB_URI/MONGO_URI environment variable is not defined.'
+          '[Lumen Database] WARNING: MONGODB_URI environment variable is not defined.'
         );
       }
-
       return null;
     }
 
     const conn = await mongoose.connect(mongoURI, {
       dbName: 'content_management_system',
+      // Force IPv4 — prevents NAT64 IPv6 (64:ff9b::) drops during long AI scans
+      family: 4,
+      // Keep connection alive during long-running AI scans
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 120000,
+      connectTimeoutMS: 30000,
+      heartbeatFrequencyMS: 10000,
+      maxIdleTimeMS: 120000,
+      // Connection pool — keeps connections warm
+      maxPoolSize: 10,
+      minPoolSize: 2,
     });
 
     console.log(
@@ -42,6 +40,15 @@ const connectDB = async () => {
     console.log(
       `[Lumen Database] Database Name: ${conn.connection.name}`
     );
+
+    // Reconnect on disconnect
+    mongoose.connection.on('disconnected', () => {
+      console.warn('[Lumen Database] MongoDB disconnected. Attempting reconnect...');
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('[Lumen Database] MongoDB reconnected ✅');
+    });
 
     return conn;
   } catch (error) {

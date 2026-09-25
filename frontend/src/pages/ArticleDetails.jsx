@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import {
   articleAPI,
   quizAPI,
@@ -26,6 +27,13 @@ const ArticleDetails = () => {
   const { isAuthenticated, user } = useAuth();
 
   const [article, setArticle] = useState(null);
+
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportMessage, setReportMessage] = useState('');
+
   const [quiz, setQuiz] = useState(null);
   const [relatedArticles, setRelatedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -804,6 +812,7 @@ const ArticleDetails = () => {
     );
 
   return (
+  
     <div className="relative min-h-screen pb-16">
 
       {/* Fixed Scroll Reading Progress Bar */}
@@ -860,6 +869,21 @@ const ArticleDetails = () => {
                   ? 'Saved'
                   : 'Bookmark'}
               </span>
+            </button>
+
+            <button
+              onClick={() => {
+                if (!isAuthenticated) {
+                  navigate('/login');
+                  return;
+                }
+
+                setReportMessage('');
+                setShowReportForm(true);
+              }}
+              className="px-4 py-2 rounded-xl border border-red-200 text-red-700 hover:bg-red-50 transition"
+            >
+              Report
             </button>
 
             <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-xs font-semibold">
@@ -1305,6 +1329,122 @@ const ArticleDetails = () => {
         )}
 
       </div>
+
+      {showReportForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl">
+      
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-serif font-bold text-stone-900">
+                Report Article
+              </h2>
+
+              <button
+                onClick={() => setShowReportForm(false)}
+                className="text-stone-500 hover:text-stone-900"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-sm text-stone-600 mb-4">
+              Help us understand what is wrong with this article.
+            </p>
+
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              Reason
+            </label>
+
+            <select
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="w-full border border-stone-200 rounded-xl px-3 py-2.5 mb-4"
+            >
+              <option value="">Select a reason</option>
+              <option value="Spam">Spam</option>
+              <option value="Inappropriate Content">Inappropriate Content</option>
+              <option value="Misleading Information">Misleading Information</option>
+              <option value="Copyright Issue">Copyright Issue</option>
+              <option value="Other">Other</option>
+            </select>
+
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              Description
+            </label>
+
+            <textarea
+              value={reportDescription}
+              onChange={(e) => setReportDescription(e.target.value)}
+              placeholder="Tell us more about the issue..."
+              rows="4"
+              className="w-full border border-stone-200 rounded-xl px-3 py-2.5 resize-none"
+            />
+
+            {reportMessage && (
+              <p className="text-sm text-emerald-700 mt-3">
+                {reportMessage}
+              </p>
+            )}
+
+            <button
+              disabled={reportLoading}
+              onClick={async () => {
+                if (!reportReason) {
+                  setReportMessage('Please select a reason.');
+                  return;
+                }
+
+                try {
+                  setReportLoading(true);
+                  setReportMessage('');
+
+                  const token = localStorage.getItem('lumen_token');
+
+                  const response = await axios.post(
+                    'http://localhost:5000/api/reports',
+                    {
+                      type: 'Article',
+                      item: article.title,
+                      targetId: article._id,
+                      reason: reportReason,
+                      description: reportDescription,
+                    },
+                    {
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }
+                  );
+
+                  if (response.data?.success) {
+                    setReportMessage('Report submitted successfully.');
+
+                    setTimeout(() => {
+                      setShowReportForm(false);
+                      setReportReason('');
+                      setReportDescription('');
+                      setReportMessage('');
+                    }, 1200);
+                  }
+                } catch (error) {
+                  console.error('Report submission error:', error);
+
+                  setReportMessage(
+                    error.response?.data?.message ||
+                    'Failed to submit report.'
+                  );
+                } finally {
+                  setReportLoading(false);
+                }
+              }}
+              className="w-full mt-5 bg-stone-900 text-white py-2.5 rounded-xl hover:bg-stone-800 transition disabled:opacity-50"
+            >
+              {reportLoading ? 'Submitting...' : 'Submit Report'}
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
