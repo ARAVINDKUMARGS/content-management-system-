@@ -87,6 +87,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const moderationRoutes = require('./routes/moderationRoutes');
 const spamAbuseRoutes = require('./routes/spamAbuseRouters');
 const trustRoutes = require('./routes/trustRoutes');
+const appealRoutes = require('./routes/appealRoutes');
 
 // Authentication
 app.use('/api/auth', authRoutes);
@@ -120,6 +121,8 @@ app.use('/api/messages', messageRoutes);
 
 // Content Reports
 app.use('/api/reports', reportRoutes);
+
+app.use('/api/appeals', appealRoutes);
 
 // Content Quality & Duplicate Detection
 app.use('/api/content-quality', contentQualityRoutes);
