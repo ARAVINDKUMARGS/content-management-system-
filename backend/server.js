@@ -85,6 +85,7 @@ const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const moderationRoutes = require('./routes/moderationRoutes');
+const spamAbuseRoutes = require('./routes/spamAbuseRouters');
 
 // Authentication
 app.use('/api/auth', authRoutes);
@@ -124,6 +125,9 @@ app.use('/api/content-quality', contentQualityRoutes);
 
 // AI Content Moderation
 app.use('/api/moderation', moderationRoutes);
+
+// Spam & Abuse Detection
+app.use('/api/spam-abuse', spamAbuseRoutes);
 
 
 
