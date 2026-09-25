@@ -6,7 +6,6 @@ const jwt = require('jsonwebtoken');
 dotenv.config({ path: require('path').join(__dirname, '..', '.env') });
 
 process.env.NODE_ENV = 'test';
-process.env.FORCE_DB_TEST = 'true';
 
 const connectDB = require('../config/db');
 
