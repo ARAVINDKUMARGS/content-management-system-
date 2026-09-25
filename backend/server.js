@@ -1,6 +1,8 @@
 const dns = require('dns');
 
-// DNS workaround for MongoDB connection issues
+// Force IPv4 DNS — prevents MongoDB Atlas NAT64 IPv6 connection drops
+// (Without this, Atlas resolves to 64:ff9b:: which drops under long-running requests)
+dns.setDefaultResultOrder('ipv4first');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const express = require('express');
@@ -8,6 +10,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('./config/db');
+const contentQualityRoutes = require('./routes/contentQualityRoutes');
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '.env') });
@@ -77,11 +80,11 @@ const quizRoutes = require('./routes/quizRoutes');
 const quizAttemptRoutes = require('./routes/quizAttemptRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const reportRoutes = require('./routes/reportRoutes');
-
-// Spam & Abuse Detection
+const moderationRoutes = require('./routes/moderationRoutes');
 const spamAbuseRoutes = require('./routes/spamAbuseRouters');
 
 // Authentication
@@ -117,8 +120,16 @@ app.use('/api/messages', messageRoutes);
 // Content Reports
 app.use('/api/reports', reportRoutes);
 
+// Content Quality & Duplicate Detection
+app.use('/api/content-quality', contentQualityRoutes);
+
+// AI Content Moderation
+app.use('/api/moderation', moderationRoutes);
+
 // Spam & Abuse Detection
 app.use('/api/spam-abuse', spamAbuseRoutes);
+
+
 
 // ======================================================
 // Root route
@@ -164,10 +175,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ======================================================
-// Socket.io
-// ======================================================
-
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -188,9 +195,7 @@ io.on('connection', (socket) => {
   socket.on('join_room', (userId) => {
     if (userId) {
       socket.join(userId.toString());
-      console.log(
-        `[Lumen Socket.io] Socket ${socket.id} joined room ${userId}`
-      );
+      console.log(`[Lumen Socket.io] Socket ${socket.id} joined room ${userId}`);
     }
   });
 
@@ -201,9 +206,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(
-      `[Lumen Socket.io] Client disconnected: ${socket.id}`
-    );
+    console.log(`[Lumen Socket.io] Client disconnected: ${socket.id}`);
   });
 });
 
@@ -223,6 +226,11 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`  🌿 Lumen CMS Server running on port ${PORT}`);
     console.log(`  🔗 API Root: http://localhost:${PORT}/api/health`);
     console.log(`  💬 Real-Time Chat & Socket.io Enabled`);
+    if (process.env.GEMINI_API_KEY) {
+      console.log(`  🤖 AI Moderation: Gemini API key loaded ✅`);
+    } else {
+      console.log(`  ⚠️  AI Moderation: No Gemini API key — rule-based fallback active`);
+    }
     console.log('=================================================\n');
   });
 }
