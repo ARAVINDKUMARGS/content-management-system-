@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 
 import { userAPI, articleAPI } from '../services/api';
+import TrustBadge from '../components/trust/TrustBadge';
 
 const PublicProfile = () => {
   const { id } = useParams();
@@ -246,6 +247,8 @@ const PublicProfile = () => {
                 >
                   {profile.role}
                 </span>
+
+                <TrustBadge score={profile.trustScore ?? 50} level={profile.trustLevel} size="sm" />
 
               </div>
 

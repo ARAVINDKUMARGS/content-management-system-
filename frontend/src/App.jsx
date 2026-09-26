@@ -33,6 +33,7 @@ import ArticleConfirmation from './pages/ArticleConfirmation';
 import DiscussionPage from './pages/DiscussionPage';
 import ChatPage from './pages/ChatPage';
 import QuizBuilder from './pages/QuizBuilder';
+import Appeals from './pages/Appeals';
 
 function App() {
   return (
@@ -223,6 +224,50 @@ function App() {
                   <ProtectedRoute>
                     <RoleRoute allowedRoles={['admin']}>
                       <AdminVerification />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* ================================================= */}
+              {/* APPEALS & MODERATION DISPUTES (PHASE 3) */}
+              {/* ================================================= */}
+
+              <Route
+                path="/appeals"
+                element={
+                  <ProtectedRoute>
+                    <Appeals />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/my-appeals"
+                element={
+                  <ProtectedRoute>
+                    <Appeals />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/appeals"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['admin']}>
+                      <Navigate to="/admin?tab=appeals" replace />
+                    </RoleRoute>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/spam-abuse"
+                element={
+                  <ProtectedRoute>
+                    <RoleRoute allowedRoles={['admin']}>
+                      <Navigate to="/admin?tab=spam" replace />
                     </RoleRoute>
                   </ProtectedRoute>
                 }

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { notificationAPI } from '../services/api';
+import TrustBadge from './trust/TrustBadge';
 
 import {
   BookOpen,
@@ -20,6 +21,8 @@ import {
   Sun,
   Moon,
   MessageSquare,
+  ShieldAlert,
+  AlertTriangle,
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -462,6 +465,8 @@ const Navbar = () => {
                       {user?.role}
                     </span>
 
+                    <TrustBadge score={user?.trustScore ?? 50} level={user?.trustLevel} size="sm" variant="compact" />
+
                     <ChevronDown className="w-3.5 h-3.5 text-stone-500" />
                   </button>
 
@@ -491,6 +496,15 @@ const Navbar = () => {
                         My Profile
                       </Link>
 
+                      {/* Report Appeals */}
+                      <Link
+                        to="/my-appeals"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-[#FAF7F2] dark:hover:bg-[#242C28] transition"
+                      >
+                        <ShieldAlert className="w-4 h-4 text-stone-500" />
+                        Report Appeals
+                      </Link>
+
                       {/* Discussions */}
                       <Link
                         to="/discussions"
@@ -513,13 +527,31 @@ const Navbar = () => {
 
                       {/* Admin */}
                       {isAdmin && (
-                        <Link
-                          to="/admin"
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-[#FAF7F2] dark:hover:bg-[#242C28] transition"
-                        >
-                          <ShieldCheck className="w-4 h-4 text-[#1A382B]" />
-                          Admin Verification Center
-                        </Link>
+                        <>
+                          <Link
+                            to="/admin"
+                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-[#FAF7F2] dark:hover:bg-[#242C28] transition"
+                          >
+                            <ShieldCheck className="w-4 h-4 text-[#1A382B]" />
+                            Admin Center
+                          </Link>
+
+                          <Link
+                            to="/admin?tab=appeals"
+                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-[#FAF7F2] dark:hover:bg-[#242C28] transition"
+                          >
+                            <ShieldAlert className="w-4 h-4 text-amber-600" />
+                            Appeals Queue
+                          </Link>
+
+                          <Link
+                            to="/admin?tab=spam"
+                            className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-stone-700 dark:text-stone-300 hover:bg-[#FAF7F2] dark:hover:bg-[#242C28] transition"
+                          >
+                            <AlertTriangle className="w-4 h-4 text-rose-600" />
+                            Spam & Abuse
+                          </Link>
+                        </>
                       )}
 
                       <div className="my-1 border-t border-[#EDE8DF] dark:border-[#2D3732]" />
