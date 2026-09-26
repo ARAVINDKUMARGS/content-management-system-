@@ -16,10 +16,14 @@ import {
   Mail,
   AlertCircle,
   Save,
+  ShieldAlert,
+  ArrowRight,
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
 import { articleAPI, quizAttemptAPI } from '../services/api';
+import TrustScoreCard from '../components/trust/TrustScoreCard';
+import TrustBadge from '../components/trust/TrustBadge';
 
 const Profile = () => {
   const { user, updateProfile } = useAuth();
@@ -618,6 +622,8 @@ const Profile = () => {
                     {user.role}
                   </span>
 
+                  <TrustBadge score={user.trustScore ?? 50} level={user.trustLevel} size="sm" />
+
                 </div>
 
                 <p className="text-sm text-stone-500 mt-2 flex items-center gap-2">
@@ -633,16 +639,49 @@ const Profile = () => {
               </div>
 
               {!isEditing && (
-                <button
-                  onClick={handleEditOpen}
-                  className="inline-flex items-center gap-2 px-4 py-2 border border-[#EDE8DF] rounded-xl text-xs font-bold text-stone-700 hover:bg-stone-50"
-                >
-                  <Edit3 className="w-4 h-4" />
-                  Edit Profile
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Link
+                    to="/my-appeals"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#EDE8DF] rounded-xl text-xs font-bold text-stone-700 hover:bg-stone-50 transition"
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5 text-stone-500" />
+                    <span>My Appeals</span>
+                  </Link>
+
+                  <button
+                    onClick={handleEditOpen}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-[#EDE8DF] rounded-xl text-xs font-bold text-stone-700 hover:bg-stone-50"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    Edit Profile
+                  </button>
+                </div>
               )}
 
             </div>
+
+            {/* Account Restriction Notice */}
+            {user.isRestricted && (
+              <div className="mt-5 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-900">
+                <div className="flex items-center gap-2.5">
+                  <ShieldAlert className="w-5 h-5 text-rose-600 flex-shrink-0" />
+                  <div>
+                    <span className="font-bold block">Account Restricted</span>
+                    <span className="text-rose-700">
+                      {user.restrictionReason ||
+                        'Your account has been restricted due to suspicious activity or moderation policy violation.'}
+                    </span>
+                  </div>
+                </div>
+                <Link
+                  to="/my-appeals?tab=submit"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition self-start sm:self-auto flex-shrink-0"
+                >
+                  <span>Submit Appeal</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            )}
 
             {/* ================================================= */}
             {/* EDIT PROFILE */}
@@ -782,6 +821,14 @@ const Profile = () => {
           </div>
         )}
 
+      </section>
+
+      {/* ================================================= */}
+      {/* USER TRUST & COMMUNITY REPUTATION */}
+      {/* ================================================= */}
+
+      <section>
+        <TrustScoreCard initialUser={user} />
       </section>
 
       {/* ================================================= */}

@@ -342,6 +342,23 @@ export const reportAPI = {
   updateReportStatus: (id, statusData) => API.patch(`/reports/${id}/status`, statusData),
 };
 
+// Report Appeals API (Phase 3)
+export const appealAPI = {
+  createAppeal: (data) => API.post('/appeals', data),
+  getMyAppeals: () => API.get('/appeals/my'),
+  getAppeals: (params) => API.get('/appeals', { params }),
+  reviewAppeal: (id, data) => API.patch(`/appeals/${id}/review`, data),
+};
+
+// Spam & Abuse API (Phase 3)
+export const spamAbuseAPI = {
+  checkCommentSpam: (commentId) => API.get(`/spam-abuse/comment/${commentId}/check`),
+  checkUserActivity: (userId) => API.get(`/spam-abuse/user/${userId}/activity/check`),
+  getUserCommentActivity: (userId) => API.get(`/spam-abuse/user/${userId}/activity`),
+  restrictUser: (userId, data) => API.patch(`/spam-abuse/user/${userId}/restrict`, data),
+  getPendingReports: () => API.get('/spam-abuse/reports/pending'),
+};
+
 // Alias QuizAPI for backwards compatibility
 export const QuizAPI = quizAPI;
 

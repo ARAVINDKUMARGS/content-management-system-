@@ -7,9 +7,14 @@ import CommentsManagement from '../components/admin/CommentsManagement';
 import ReportsManagement from '../components/admin/ReportsManagement';
 import SubscriptionsManagement from '../components/admin/SubscriptionsManagement';
 import AIModerationDashboard from '../components/admin/AIModerationDashboard';
+import AppealsManagement from '../components/admin/AppealsManagement';
+import SpamAbuseManagement from '../components/admin/SpamAbuseManagement';
+import TrustBadge from '../components/trust/TrustBadge';
 
 import {
   ShieldCheck,
+  ShieldAlert,
+  AlertTriangle,
   Users,
   PenLine,
   BookOpen,
@@ -583,6 +588,16 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
       label: 'Subscriptions',
       icon: CreditCard,
     },
+    {
+      id: 'appeals',
+      label: 'Appeals',
+      icon: ShieldAlert,
+    },
+    {
+      id: 'spam',
+      label: 'Spam & Abuse',
+      icon: AlertTriangle,
+    },
   ];
 
   // ==========================================
@@ -867,6 +882,7 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
                   <th className="pb-3 pl-2">User</th>
                   <th className="pb-3">Email</th>
                   <th className="pb-3">Role</th>
+                  <th className="pb-3">Trust Standing</th>
                   <th className="pb-3">Registered</th>
                   <th className="pb-3 text-right">Actions</th>
                 </tr>
@@ -933,6 +949,22 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
                         </option>
                       </select>
 
+                    </td>
+
+                    <td className="py-3.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <TrustBadge
+                          score={u.trustScore ?? 50}
+                          level={u.trustLevel}
+                          size="sm"
+                          variant="compact"
+                        />
+                        {u.isRestricted && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                            Restricted
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="py-3.5 text-stone-500">
@@ -1359,6 +1391,12 @@ const [reviewingArticle, setReviewingArticle] = useState(false);
 
       case 'moderation':
         return <AIModerationDashboard />;
+
+      case 'appeals':
+        return <AppealsManagement />;
+
+      case 'spam':
+        return <SpamAbuseManagement />;
 
       default:
         return renderOverview();
