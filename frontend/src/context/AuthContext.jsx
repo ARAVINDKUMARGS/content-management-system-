@@ -62,14 +62,7 @@ export const AuthProvider = ({ children }) => {
 
   // Switch demo persona instantly
   const switchDemoUser = async (demoEmail) => {
-    const passwordMap = {
-      'priya.mehta@lumen.com': 'author123',
-      'author@lumen.com': 'author123',
-      'admin@lumen.com': 'admin123',
-      'reader@lumen.com': 'reader123',
-    };
-
-    const pwd = passwordMap[demoEmail] || 'password123';
+    const pwd = 'password123';
     return await login(demoEmail, pwd);
   };
 
