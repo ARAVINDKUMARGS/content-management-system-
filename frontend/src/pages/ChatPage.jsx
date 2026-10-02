@@ -24,6 +24,7 @@ const ChatPage = () => {
   useEffect(() => {
     if (!currentUserId) return;
 
+    const authToken = token || localStorage.getItem('lumen_token');
     const backendUrl = import.meta.env.VITE_API_URL 
       ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') 
       : 'https://content-management-system-2-he9n.onrender.com';
