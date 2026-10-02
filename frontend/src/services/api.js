@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Base API instance
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://content-management-system-2-he9n.onrender.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
