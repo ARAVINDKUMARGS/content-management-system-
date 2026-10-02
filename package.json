@@ -5,11 +5,11 @@
   "description": "Lumen CMS — Integrated Full-Stack Content Management System",
   "main": "backend/server.js",
   "scripts": {
-    "start": "concurrently \"npm --prefix backend start\" \"npm --prefix frontend run dev\"",
+    "postinstall": "npm --prefix backend install",
+    "start": "node server.js",
     "dev": "concurrently \"npm --prefix backend start\" \"npm --prefix frontend run dev\"",
     "backend": "npm --prefix backend start",
     "frontend": "npm --prefix frontend run dev",
-
     "test": "npm --prefix backend test"
   },
   "devDependencies": {

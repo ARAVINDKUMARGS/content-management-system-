@@ -23,26 +23,13 @@ connectDB().catch((err) => {
   );
 });
 
-// Allowed frontend origins
-const allowedOrigins = Array.from(
-  new Set([
-    process.env.CLIENT_URL,
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:5173',
-  ].filter(Boolean))
-);
-
-// CORS
+// CORS configuration - Allow all origins dynamically with credentials support
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error('CORS policy violation: Origin not allowed'));
-    },
+    origin: true,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 
@@ -182,7 +169,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   },
