@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Trash2, Edit3, Eye, CheckCircle, AlertCircle, HelpCircle, Save, X, Search, Filter } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://content-management-system-2-he9n.onrender.com/api';
 
 const QuizBuilder = () => {
   const { user, isAuthenticated } = useAuth();

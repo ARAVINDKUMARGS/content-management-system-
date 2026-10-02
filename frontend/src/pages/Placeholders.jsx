@@ -162,7 +162,8 @@ export const BrowsePage = () => {
           queryParams.append('category', selectedCategory);
         }
 
-        const url = `http://localhost:5000/api/articles?${queryParams.toString()}`;
+        const apiBase = import.meta.env.VITE_API_URL || 'https://content-management-system-2-he9n.onrender.com/api';
+        const url = `${apiBase}/articles?${queryParams.toString()}`;
 
         const response = await fetch(url, {
           method: 'GET',
@@ -370,8 +371,9 @@ export const WritePage = () => {
        * STEP 1:
        * Create the article.
        */
+      const apiBase = import.meta.env.VITE_API_URL || 'https://content-management-system-2-he9n.onrender.com/api';
       const createResponse = await fetch(
-        'http://localhost:5000/api/articles',
+        `${apiBase}/articles`,
         {
           method: 'POST',
 
@@ -416,7 +418,7 @@ export const WritePage = () => {
        * Submit the newly created article for review.
        */
       const submitResponse = await fetch(
-        `http://localhost:5000/api/articles/${articleId}/submit`,
+        `${apiBase}/articles/${articleId}/submit`,
         {
           method: 'PATCH',
 

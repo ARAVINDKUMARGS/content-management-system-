@@ -568,8 +568,9 @@ const ArticleDetails = () => {
 
         // Fetch Recommendations
         try {
+          const apiBase = import.meta.env.VITE_API_URL || 'https://content-management-system-2-he9n.onrender.com/api';
           const recRes = await fetch(
-            `http://localhost:5000/api/articles/${id}/recommendations`
+            `${apiBase}/articles/${id}/recommendations`
           );
 
           const recData = await recRes.json();
