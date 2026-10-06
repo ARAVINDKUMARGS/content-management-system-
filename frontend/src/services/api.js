@@ -79,6 +79,10 @@ export const userAPI = {
   updateProfile: (data) =>
     API.put('/users/profile', data),
 
+  // Change current user's password
+  changePassword: (data) =>
+    API.put('/users/change-password', data),
+
   // Public user profile
   getUserById: (id) =>
     API.get(`/users/${id}`),

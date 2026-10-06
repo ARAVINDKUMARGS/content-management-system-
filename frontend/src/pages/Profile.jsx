@@ -18,10 +18,12 @@ import {
   Save,
   ShieldAlert,
   ArrowRight,
+  Lock,
+  Key,
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
-import { articleAPI, quizAttemptAPI } from '../services/api';
+import { articleAPI, quizAttemptAPI, userAPI } from '../services/api';
 import TrustScoreCard from '../components/trust/TrustScoreCard';
 import TrustBadge from '../components/trust/TrustBadge';
 
@@ -59,7 +61,16 @@ const Profile = () => {
   const [bookmarks, setBookmarks] = useState([]);
 
   // =====================================================
-  // MESSAGES
+  // PASSWORD CHANGE STATE
+  // =====================================================
+
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   // =====================================================
 
   const [successMsg, setSuccessMsg] = useState('');
@@ -318,6 +329,59 @@ const Profile = () => {
 
     setSuccessMsg('');
     setErrorMsg('');
+  };
+
+  // =====================================================
+  // CHANGE PASSWORD
+  // =====================================================
+
+  const handlePasswordChange = async (event) => {
+    if (event) {
+      event.preventDefault();
+    }
+
+    setPasswordSuccess('');
+    setPasswordError('');
+
+    if (!currentPassword || !newPassword) {
+      setPasswordError('Please provide both current and new passwords.');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError('New passwords do not match.');
+      return;
+    }
+
+    try {
+      setPasswordSaving(true);
+      const res = await userAPI.changePassword({
+        currentPassword,
+        newPassword,
+        confirmPassword: confirmNewPassword,
+      });
+
+      if (res.data?.success) {
+        setPasswordSuccess(res.data.message || 'Password changed successfully!');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+        setTimeout(() => setShowPasswordChange(false), 2500);
+      } else {
+        setPasswordError(res.data?.message || 'Failed to change password.');
+      }
+    } catch (err) {
+      setPasswordError(
+        err.response?.data?.message || 'Error changing password. Please try again.'
+      );
+    } finally {
+      setPasswordSaving(false);
+    }
   };
 
   // =====================================================
@@ -655,6 +719,18 @@ const Profile = () => {
                     <Edit3 className="w-4 h-4" />
                     Edit Profile
                   </button>
+
+                  <button
+                    onClick={() => {
+                      setShowPasswordChange(!showPasswordChange);
+                      setPasswordSuccess('');
+                      setPasswordError('');
+                    }}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-[#EDE8DF] rounded-xl text-xs font-bold text-stone-700 hover:bg-stone-50"
+                  >
+                    <Key className="w-4 h-4" />
+                    Change Password
+                  </button>
                 </div>
               )}
 
@@ -757,6 +833,106 @@ const Profile = () => {
                 {user.bio ||
                   'No bio added yet.'}
               </p>
+            )}
+
+            {/* ================================================= */}
+            {/* CHANGE PASSWORD FORM */}
+            {/* ================================================= */}
+
+            {showPasswordChange && (
+              <form
+                onSubmit={handlePasswordChange}
+                className="mt-6 p-6 bg-[#FAF7F2] border border-[#EDE8DF] rounded-2xl space-y-4 max-w-lg shadow-xs"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-serif font-bold text-base text-stone-900 flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-[#1A382B]" />
+                    Change Account Password
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordChange(false)}
+                    className="p-1 text-stone-400 hover:text-stone-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {passwordSuccess && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-medium">
+                    {passwordSuccess}
+                  </div>
+                )}
+
+                {passwordError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-medium">
+                    {passwordError}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EDE8DF] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[#1A382B]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    New Password (min. 6 characters)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EDE8DF] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[#1A382B]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-stone-700 mb-1">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                    placeholder="Re-enter new password"
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#EDE8DF] rounded-xl text-xs outline-none focus:ring-2 focus:ring-[#1A382B]"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={passwordSaving}
+                    className="px-4 py-2 bg-[#1A382B] text-white rounded-xl text-xs font-bold hover:bg-[#11261D] disabled:opacity-50"
+                  >
+                    {passwordSaving ? 'Updating...' : 'Update Password'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordChange(false);
+                      setPasswordSuccess('');
+                      setPasswordError('');
+                    }}
+                    className="px-3.5 py-2 border border-[#EDE8DF] rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             )}
 
           </div>

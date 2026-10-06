@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getProfile,
   updateProfile,
+  changePassword,
   getUserById,
   getAllUsers,
   createUserByAdmin,
@@ -14,6 +15,7 @@ const { authenticateUser, authorizeRole } = require('../middleware/auth');
 // Protected profile endpoints for the authenticated user
 router.get('/profile', authenticateUser, getProfile);
 router.put('/profile', authenticateUser, updateProfile);
+router.put('/change-password', authenticateUser, changePassword);
 
 // User directory (for chat and admin management)
 router.get('/', authenticateUser, getAllUsers);

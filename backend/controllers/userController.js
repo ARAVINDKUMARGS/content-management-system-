@@ -49,10 +49,26 @@ const updateProfile = async (req, res) => {
     const { name, bio, avatar } = req.body;
     const userId = req.user.id || req.user._id;
 
-    if (name !== undefined && !name.trim()) {
+    if (name !== undefined) {
+      const trimmedName = name.trim();
+      if (!trimmedName) {
+        return res.status(400).json({
+          success: false,
+          message: 'Name cannot be empty.',
+        });
+      }
+      if (trimmedName.length > 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'Name cannot exceed 100 characters.',
+        });
+      }
+    }
+
+    if (bio !== undefined && bio.trim().length > 500) {
       return res.status(400).json({
         success: false,
-        message: 'Name cannot be empty.',
+        message: 'Bio cannot exceed 500 characters.',
       });
     }
 
@@ -140,6 +156,7 @@ const getAllUsers = async (req, res) => {
       count: users.length,
       users: users.map((u) => ({
         id: u.id || u._id,
+        _id: u.id || u._id,
         name: u.name,
         email: u.email,
         role: u.role,
@@ -293,9 +310,84 @@ const deleteUser = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Change current user's password
+ * @route   PUT /api/users/change-password
+ * @access  Private
+ */
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.user.id || req.user._id;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide both your current password and a new password.',
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long.',
+      });
+    }
+
+    if (confirmPassword && newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New passwords do not match. Please re-enter your new password.',
+      });
+    }
+
+    // Retrieve user including password
+    let user;
+    if (userStore.isDBConnected()) {
+      const User = require('../models/User');
+      user = await User.findById(userId).select('+password');
+    } else {
+      user = await userStore.findById(userId);
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User account not found.',
+      });
+    }
+
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'The current password provided is incorrect.',
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    await userStore.updatePassword(userId, hashedPassword);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password changed successfully.',
+    });
+  } catch (error) {
+    console.error('[User changePassword Error]:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error updating password.',
+    });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
+  changePassword,
   getUserById,
   getAllUsers,
   createUserByAdmin,

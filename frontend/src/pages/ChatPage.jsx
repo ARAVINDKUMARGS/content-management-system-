@@ -25,9 +25,9 @@ const ChatPage = () => {
     if (!currentUserId) return;
 
     const authToken = token || localStorage.getItem('lumen_token');
-    const backendUrl = import.meta.env.VITE_API_URL 
-      ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') 
-      : 'https://content-management-system-2-he9n.onrender.com';
+    const backendUrl = window.location.hostname === 'localhost'
+      ? 'http://localhost:5000'
+      : (import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || window.location.origin);
     const socket = io(backendUrl, {
       auth: { token: authToken },
     });
@@ -154,8 +154,8 @@ const ChatPage = () => {
 
       setMessageText('');
     } catch (err) {
-      console.error('Send message error:', err);
-      setError('Message could not be sent.');
+      console.error('[ChatPage] Send message error:', err.response?.status, err.response?.data || err.message);
+      setError(err.response?.data?.message || 'Message could not be sent. Please try again.');
     } finally {
       setSending(false);
     }

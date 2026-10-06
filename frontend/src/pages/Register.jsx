@@ -27,8 +27,19 @@ const Register = () => {
       return;
     }
 
+    if (name.trim().length > 100) {
+      setError('Name cannot exceed 100 characters.');
+      return;
+    }
+
     if (!email.trim()) {
       setError('Please provide your email address.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError('Please provide a valid email address.');
       return;
     }
 

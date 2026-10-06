@@ -22,10 +22,10 @@ const connectDB = async () => {
       dbName: 'content_management_system',
       // Force IPv4 — prevents NAT64 IPv6 (64:ff9b::) drops during long AI scans
       family: 4,
-      // Keep connection alive during long-running AI scans
-      serverSelectionTimeoutMS: 30000,
+      // Keep connection responsive
+      serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 120000,
-      connectTimeoutMS: 30000,
+      connectTimeoutMS: 5000,
       heartbeatFrequencyMS: 10000,
       maxIdleTimeMS: 120000,
       // Connection pool — keeps connections warm

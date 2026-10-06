@@ -28,10 +28,33 @@ const register = async (req, res) => {
       });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(normalizedEmail)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address.',
+      });
+    }
+
+    if (name.trim().length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name cannot exceed 100 characters.',
+      });
+    }
+
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
         message: 'Password must be at least 6 characters long.',
+      });
+    }
+
+    if (req.body.confirmPassword && password !== req.body.confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Passwords do not match. Please re-enter your password.',
       });
     }
 
@@ -51,7 +74,6 @@ const register = async (req, res) => {
     }
 
     // 3. Check for existing user with this email
-    const normalizedEmail = email.toLowerCase().trim();
     const existingUser = await userStore.findByEmail(normalizedEmail);
     if (existingUser) {
       return res.status(400).json({
@@ -92,6 +114,12 @@ const register = async (req, res) => {
     });
   } catch (error) {
     console.error('[Auth Register Error]:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'An account with this email address already exists. Please sign in instead.',
+      });
+    }
     return res.status(500).json({
       success: false,
       message: 'An error occurred during registration. Please try again later.',
@@ -128,11 +156,8 @@ const login = async (req, res) => {
       });
     }
 
-    // 3. Compare password with bcrypt (supports both password123 and demo role passwords)
-    let isMatch = await user.matchPassword(password);
-    if (!isMatch && ['admin123', 'author123', 'reader123', 'password123'].includes(password)) {
-      isMatch = await user.matchPassword('password123');
-    }
+    // 3. Compare password with bcrypt
+    const isMatch = await user.matchPassword(password);
 
     if (!isMatch) {
       return res.status(401).json({

@@ -1,6 +1,5 @@
 const express = require('express');
-const Message = require('../models/Message');
-const User = require('../models/User');
+const messageStore = require('../models/messageStore');
 const { authenticateUser } = require('../middleware/auth');
 
 const router = express.Router();
@@ -13,27 +12,25 @@ router.get('/:userId', async (req, res) => {
     const currentUserId = req.user._id || req.user.id;
     const selectedUserId = req.params.userId;
 
-    const messages = await Message.find({
-      $or: [
-        {
-          sender: currentUserId,
-          receiver: selectedUserId,
-        },
-        {
-          sender: selectedUserId,
-          receiver: currentUserId,
-        },
-      ],
-    }).sort({ createdAt: 1 });
+    if (!selectedUserId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Recipient user ID is required.',
+      });
+    }
 
-    res.json({
+    const messages = await messageStore.getConversation(currentUserId, selectedUserId);
+
+    return res.status(200).json({
       success: true,
+      count: messages.length,
       messages,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error('[Messages GET Error]:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Failed to fetch messages',
+      message: 'Failed to fetch messages.',
       error: error.message,
     });
   }
@@ -45,33 +42,50 @@ router.post('/', async (req, res) => {
     const sender = req.user._id || req.user.id;
     const { receiver, text } = req.body;
 
-    if (!receiver || !text?.trim()) {
+    if (!receiver || !text || !text.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'receiver and text are required',
+        message: 'Both receiver and message text are required.',
       });
     }
 
-    const message = await Message.create({
+    if (String(sender) === String(receiver)) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot send a message to yourself.',
+      });
+    }
+
+    const result = await messageStore.createMessage({
       sender,
       receiver,
       text: text.trim(),
     });
 
+    if (!result.success) {
+      return res.status(result.status || 400).json({
+        success: false,
+        message: result.message,
+      });
+    }
+
+    const message = result.message;
+
+    // Real-time broadcast via Socket.io
     const io = req.app.get('io');
     if (io) {
       io.to(receiver.toString()).emit('receive_message', message);
     }
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message,
     });
-
   } catch (error) {
-    res.status(500).json({
+    console.error('[Messages POST Error]:', error);
+    return res.status(500).json({
       success: false,
-      message: 'Failed to send message',
+      message: 'Failed to send message.',
       error: error.message,
     });
   }
